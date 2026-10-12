@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Icons</title>
+<style>
+  :root { color-scheme: light dark; --bg:#fafafa; --fg:#18181b; --muted:#71717a; --card:#fff; --line:#e4e4e7; --accent:#2563eb; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#111113; --fg:#f4f4f5; --muted:#a1a1aa; --card:#18181b; --line:#2e2e33; --accent:#60a5fa; } }
+  * { box-sizing: border-box; }
+  body { margin:0; font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; background:var(--bg); color:var(--fg); }
+  header { position:sticky; top:0; z-index:5; background:var(--bg); border-bottom:1px solid var(--line); padding:12px 16px; display:flex; flex-wrap:wrap; gap:10px 14px; align-items:center; }
+  h1 { font-size:17px; margin:0 8px 0 0; }
+  input[type=search], select, input[type=number] { font:inherit; color:inherit; background:var(--card); border:1px solid var(--line); border-radius:8px; padding:6px 10px; }
+  input[type=search] { flex:1 1 200px; min-width:140px; }
+  input[type=number] { width:74px; }
+  input[type=color] { width:36px; height:32px; border:1px solid var(--line); border-radius:8px; background:var(--card); padding:2px; }
+  label { display:flex; align-items:center; gap:6px; color:var(--muted); font-size:13px; }
+  button { font:inherit; color:inherit; background:var(--card); border:1px solid var(--line); border-radius:8px; padding:6px 12px; cursor:pointer; }
+  button:hover { border-color:var(--accent); }
+  main { padding:16px; max-width:1400px; margin:0 auto; }
+  #meta { color:var(--muted); font-size:13px; margin:0 0 12px; }
+  #grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(104px,1fr)); gap:8px; }
+  .cell { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px 6px 8px; display:flex; flex-direction:column; align-items:center; gap:8px; cursor:pointer; text-align:center; }
+  .cell:hover, .cell:focus-visible { border-color:var(--accent); outline:none; }
+  .cell svg { width:var(--size,28px); height:var(--size,28px); color:var(--ic,inherit); }
+  .cell span { font-size:11.5px; color:var(--muted); overflow-wrap:anywhere; line-height:1.25; }
+  dialog { background:var(--card); color:var(--fg); border:1px solid var(--line); border-radius:14px; padding:20px; width:min(520px,94vw); }
+  dialog::backdrop { background:rgba(0,0,0,.45); }
+  .big { display:grid; place-items:center; height:130px; background:var(--bg); border-radius:10px; margin-bottom:12px; }
+  .big svg { width:72px; height:72px; color:var(--ic,inherit); }
+  dialog h2 { margin:0 0 2px; font-size:18px; }
+  dialog p { margin:0 0 12px; color:var(--muted); font-size:13px; }
+  .row { display:grid; grid-template-columns:1fr auto; gap:8px; margin-bottom:8px; }
+  code { font:12.5px ui-monospace,Menlo,Consolas,monospace; background:var(--bg); border:1px solid var(--line); border-radius:8px; padding:7px 9px; overflow:auto; white-space:nowrap; display:block; }
+  footer { padding:20px 16px 40px; text-align:center; color:var(--muted); font-size:13px; }
+  footer a { color:var(--accent); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Icons</h1>
+  <input id="q" type="search" placeholder="Search icons…" autocomplete="off" autofocus>
+  <select id="set" aria-label="Set"><option value="">All sets</option></select>
+  <label>Size <input id="size" type="number" min="12" max="64" value="28"></label>
+  <label>Stroke <input id="stroke" type="number" min="0.5" max="3" step="0.25" value="2"></label>
+  <label>Colour <input id="color" type="color" value="#2563eb"></label>
+  <button id="reset" type="button">Reset</button>
+</header>
+<main>
+  <p id="meta">Loading…</p>
+  <div id="grid" role="list"></div>
+</main>
+<footer>
+  Served from the open-source <a href="{{SOURCE_URL}}">icon repository</a> under the GNU AGPL-3.0.
+  Embed with <code style="display:inline;padding:2px 6px">&lt;script src="/icons.js"&gt;</code>.
+</footer>
+
+<dialog id="dlg">
+  <div class="big"><svg id="bigsvg" viewBox="0 0 24 24"><use id="biguse"/></svg></div>
+  <h2 id="dname"></h2><p id="dset"></p>
+  <div id="snips"></div>
+  <div style="display:flex;justify-content:space-between;margin-top:14px"><a id="dl" download>Download SVG</a><button id="close" type="button">Close</button></div>
+</dialog>
+
+<script>
+(async () => {
+  const $ = (id) => document.getElementById(id);
+  const base = new URL('.', location.href).href.replace(/\/$/, '');
+  const root = document.documentElement;
+  let icons = [], color = null;
+
+  const [sprite, data] = await Promise.all([
+    fetch(base + '/sprite.svg').then((r) => r.text()),
+    fetch(base + '/api/icons').then((r) => r.json()),
+  ]);
+  const holder = document.createElement('div');
+  holder.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden';
+  holder.innerHTML = sprite;
+  document.body.prepend(holder);
+
+  icons = data.icons;
+  for (const s of Object.keys(data.sets)) $('set').add(new Option(`${s} (${data.sets[s]})`, s));
+
+  function paint() {
+    const q = $('q').value.trim().toLowerCase(), set = $('set').value;
+    const list = icons.filter((i) => (!set || i.set === set) && (!q || i.name.includes(q)));
+    $('meta').textContent = `${list.length} of ${data.total} icons` + (data.commit ? ` · commit ${data.commit}` : '');
+    const frag = document.createDocumentFragment();
+    for (const i of list) {
+      const b = document.createElement('div');
+      b.className = 'cell'; b.tabIndex = 0; b.setAttribute('role', 'listitem');
+      b.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#${i.set}-${i.name}"/></svg><span>${i.name}</span>`;
+      b.onclick = () => open(i);
+      b.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(i); } };
+      frag.append(b);
+    }
+    $('grid').replaceChildren(frag);
+  }
+
+  function style() {
+    root.style.setProperty('--size', $('size').value + 'px');
+    root.style.setProperty('--sw', $('stroke').value);
+    color ? root.style.setProperty('--ic', color) : root.style.removeProperty('--ic');
+  }
+
+  const params = () => {
+    const p = new URLSearchParams();
+    if ($('size').value !== '28') p.set('size', $('size').value);
+    if ($('stroke').value !== '2') p.set('stroke', $('stroke').value);
+    if (color) p.set('color', color.slice(1));
+    const s = p.toString();
+    return s ? '?' + s : '';
+  };
+
+  function open(i) {
+    $('biguse').setAttribute('href', `#${i.set}-${i.name}`);
+    $('dname').textContent = i.name; $('dset').textContent = `set: ${i.set}`;
+    const url = `${base}/i/${i.set}/${i.name}.svg${params()}`;
+    $('dl').href = url;
+    const snippets = [
+      ['URL', url],
+      ['Image tag', `<img src="${url}" width="${$('size').value}" height="${$('size').value}" alt="">`],
+      ['Inline, inherits text colour (needs icons.js)', `<svg-icon name="${i.name}"${i.set !== 'ui' ? ` set="${i.set}"` : ''} size="${$('size').value}"></svg-icon>`],
+    ];
+    $('snips').replaceChildren(...snippets.map(([label, text]) => {
+      const row = document.createElement('div');
+      row.innerHTML = `<p style="margin:8px 0 4px">${label}</p><div class="row"><code></code><button type="button">Copy</button></div>`;
+      row.querySelector('code').textContent = text;
+      const btn = row.querySelector('button');
+      btn.onclick = async () => { await navigator.clipboard.writeText(text); btn.textContent = 'Copied'; setTimeout(() => (btn.textContent = 'Copy'), 1200); };
+      return row;
+    }));
+    $('dlg').showModal();
+  }
+
+  $('q').oninput = $('set').onchange = paint;
+  $('size').oninput = $('stroke').oninput = style;
+  $('color').oninput = (e) => { color = e.target.value; style(); };
+  $('reset').onclick = () => { $('size').value = 28; $('stroke').value = 2; color = null; style(); };
+  $('close').onclick = () => $('dlg').close();
+  $('dlg').onclick = (e) => { if (e.target === $('dlg')) $('dlg').close(); };
+  style(); paint();
+})().catch((e) => { document.getElementById('meta').textContent = 'Failed to load icons: ' + e.message; });
+</script>
+</body>
+</html>

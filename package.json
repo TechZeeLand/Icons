@@ -1,0 +1,13 @@
+{
+  "name": "icon-service",
+  "version": "1.0.0",
+  "description": "SVG icon set plus a tiny self-hosted service that serves it",
+  "license": "AGPL-3.0-or-later",
+  "private": true,
+  "type": "commonjs",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "start": "node server/server.js",
+    "validate": "node scripts/validate.mjs"
+  }
+}

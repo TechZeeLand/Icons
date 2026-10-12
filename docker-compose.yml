@@ -1,0 +1,29 @@
+# Portainer: Stacks > Add stack > "Repository" (or paste this file and set the env vars below).
+services:
+  icons:
+    build: .
+    image: icon-service:latest
+    container_name: icon-service
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8085}:3000"          # point your reverse proxy at this port
+    environment:
+      ICONS_REPO_URL: ${ICONS_REPO_URL:-}             # e.g. https://github.com/you/icons.git (empty = serve bundled icons)
+      ICONS_REPO_BRANCH: ${ICONS_REPO_BRANCH:-main}
+      ICONS_SUBDIR: ${ICONS_SUBDIR:-icons}            # folder inside the repo that holds ui/ social/ other/
+      SYNC_INTERVAL_SECONDS: ${SYNC_INTERVAL_SECONDS:-300}   # 0 = only sync on webhook / restart
+      SYNC_TOKEN: ${SYNC_TOKEN:-}                     # enables POST /_sync and signed git webhooks
+      SOURCE_URL: ${SOURCE_URL:-}                     # shown in the footer and at /source (AGPL-3.0 section 13)
+      CACHE_MAX_AGE: ${CACHE_MAX_AGE:-86400}
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}                  # or your site origins, e.g. https://app.example.com
+    volumes:
+      - icons-data:/data
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  icons-data:

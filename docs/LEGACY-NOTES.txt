@@ -1,0 +1,291 @@
+SVG ICONS - Assignment Cover Generator edition, extended for Byabsayee
+(started from the Online Store icon set; extended and repaired for these projects)
+
+ui/     line icons, 24x24 grid, stroke="currentColor" (inherits text colour), stroke-width 2, round caps/joins
+social/ brand glyphs, filled with currentColor (google.svg keeps its official colours; signal.svg uses a 160x160 viewBox; github.svg uses a 16x16 viewBox;
+        dribbble.svg and stackoverflow.svg are drawn as line icons like the ui/ set)
+other/  project-specific artwork (store favicon + image placeholder, these have fixed colours)
+
+Total: 231 icons (216 ui + 15 social) + 2 other.
+
+Resize: change width/height on the <svg> or size it in CSS. Recolour: set `color` on the element or parent.
+In the Assignment Cover Generator they are inlined with  <?php echo \App\Icon::svg('name'); ?>  (see src/Icon.php).
+In Byabsayee they are inlined with  <?= icon('name') ?>  (app/Helpers/Icon.php) and  Icons.svg('name')  in JavaScript.
+To add an icon to Byabsayee: put NAME.svg in public/icons/ui/ (or social/) and run  php bin/build-icons.php
+
+[ui]
+  ad.svg
+  address-book.svg
+  alert-circle.svg
+  alert-triangle.svg
+  align-left.svg
+  archive.svg
+  arrow-down.svg
+  arrow-left.svg
+  arrow-right.svg
+  arrow-up.svg
+  arrows-left-right.svg
+  award.svg
+  ban.svg
+  bank.svg
+  banknote.svg
+  bar-chart.svg
+  barcode.svg
+  bell.svg
+  bell-off.svg
+  book.svg
+  book-open.svg
+  bookmark.svg
+  boxes.svg
+  briefcase.svg
+  building.svg
+  cake.svg
+  calculator.svg
+  calendar.svg
+  calendar-check.svg
+  camera.svg
+  car-front.svg
+  cash-register.svg
+  chart-line.svg
+  check.svg
+  check-circle.svg
+  check-double.svg
+  chevron-down.svg
+  chevron-left.svg
+  chevron-right.svg
+  chevron-up.svg
+  chevrons-left.svg
+  chevrons-right.svg
+  chevrons-up-down.svg
+  circle.svg
+  circle-arrow-down.svg
+  circle-arrow-up.svg
+  circle-dot.svg
+  clipboard.svg
+  clipboard-check.svg
+  clock.svg
+  close.svg
+  cloud-upload.svg
+  code.svg
+  coffee.svg
+  coins.svg
+  copy.svg
+  credit-card.svg
+  crown.svg
+  dashboard.svg
+  database.svg
+  download.svg
+  droplet.svg
+  ellipsis.svg
+  external-link.svg
+  eye.svg
+  eye-off.svg
+  file-edit.svg
+  file-image.svg
+  file-log.svg
+  file-minus.svg
+  file-pdf.svg
+  file-text.svg
+  file-x.svg
+  filter.svg
+  flag.svg
+  flame.svg
+  folder.svg
+  folder-plus.svg
+  font.svg
+  gauge.svg
+  gender.svg
+  gift.svg
+  git-branch.svg
+  globe.svg
+  graduation-cap.svg
+  grid.svg
+  hammer.svg
+  hand-coins.svg
+  hash.svg
+  heading.svg
+  heart.svg
+  heart-filled.svg
+  help-circle.svg
+  history.svg
+  home.svg
+  hourglass.svg
+  id-card.svg
+  image.svg
+  images.svg
+  inbox.svg
+  infinity.svg
+  info.svg
+  invoice.svg
+  invoice-dollar.svg
+  key.svg
+  languages.svg
+  laptop.svg
+  layers.svg
+  leaf.svg
+  life-buoy.svg
+  lightbulb.svg
+  link.svg
+  list.svg
+  list-check.svg
+  loader.svg
+  lock.svg
+  lock-open.svg
+  login.svg
+  logout.svg
+  mail.svg
+  mail-open.svg
+  map-pin.svg
+  map-pin-address.svg
+  megaphone.svg
+  menu.svg
+  message-square.svg
+  minimize.svg
+  minus.svg
+  monitor.svg
+  moon.svg
+  package.svg
+  package-open.svg
+  package-return.svg
+  package-x.svg
+  paintbrush.svg
+  palette.svg
+  paperclip.svg
+  percent.svg
+  phone.svg
+  pie-chart.svg
+  piggy-bank.svg
+  play.svg
+  plus.svg
+  plus-circle.svg
+  printer.svg
+  qr-code.svg
+  receipt.svg
+  receipt-percent.svg
+  redo.svg
+  refresh.svg
+  rocket.svg
+  rotate-ccw.svg
+  rotate-cw.svg
+  save.svg
+  scale.svg
+  scan.svg
+  school.svg
+  search.svg
+  send.svg
+  server.svg
+  settings.svg
+  share.svg
+  shield.svg
+  shield-check.svg
+  shield-x.svg
+  shirt.svg
+  shopping-bag.svg
+  shopping-cart.svg
+  signpost.svg
+  sitemap.svg
+  sliders.svg
+  smartphone.svg
+  snowflake.svg
+  snowflake-off.svg
+  sparkles.svg
+  sprout.svg
+  square-pen.svg
+  star-filled.svg
+  star-outline.svg
+  store.svg
+  sun.svg
+  tablet.svg
+  tag.svg
+  tags.svg
+  text-size.svg
+  thumbs-up.svg
+  ticket.svg
+  toggle-off.svg
+  toggle-on.svg
+  trash.svg
+  trending-down.svg
+  trending-up.svg
+  trolley.svg
+  truck.svg
+  truck-fast.svg
+  undo.svg
+  upload.svg
+  user.svg
+  user-check.svg
+  user-circle.svg
+  user-edit.svg
+  user-lock.svg
+  user-off.svg
+  user-plus.svg
+  user-tie.svg
+  user-x.svg
+  users.svg
+  users-group.svg
+  utensils.svg
+  wallet.svg
+  wallet-cards.svg
+  warehouse.svg
+  wifi.svg
+  wrench.svg
+  x-circle.svg
+  zap.svg
+
+[social]
+  behance.svg
+  dribbble.svg
+  facebook.svg
+  github.svg
+  google.svg
+  instagram.svg
+  linkedin.svg
+  medium.svg
+  messenger.svg
+  signal.svg
+  stackoverflow.svg
+  tiktok.svg
+  whatsapp.svg
+  x.svg
+  youtube.svg
+
+[other]
+  image-placeholder.svg
+  store-favicon.svg
+
+Changes in this version
+  Added  (ui, 129): address-book, align-left, archive, arrow-down, arrows-left-right, ban, bank, banknote,
+                   bar-chart, barcode, bell, bell-off, book, bookmark, boxes, briefcase, building, cake,
+                   calculator, calendar, calendar-check, camera, cash-register, chart-line, check-double,
+                   chevrons-left, chevrons-right, chevrons-up-down, circle, circle-arrow-down,
+                   circle-arrow-up, circle-dot, clipboard, clipboard-check, clock, cloud-upload, code,
+                   coffee, coins, crown, database, droplet, ellipsis, file-edit, file-image, file-minus,
+                   file-x, filter, flag, flame, folder-plus, gauge, gender, gift, git-branch, hand-coins,
+                   hash, help-circle, history, hourglass, images, inbox, infinity, invoice, invoice-dollar,
+                   languages, laptop, layers, leaf, life-buoy, lightbulb, list, list-check, lock-open, login,
+                   mail-open, megaphone, message-square, monitor, package-open, package-return, package-x,
+                   paintbrush, percent, pie-chart, piggy-bank, printer, qr-code, receipt, receipt-percent,
+                   redo, refresh, rocket, scale, scan, school, send, share, shield-x, shirt, shopping-bag,
+                   sitemap, smartphone, sparkles, sprout, store, tablet, tags, thumbs-up, toggle-off,
+                   toggle-on, trending-down, trending-up, trolley, truck-fast, undo, user-check, user-circle,
+                   user-edit, user-off, user-plus, user-tie, user-x, utensils, wallet, wallet-cards,
+                   warehouse, wifi, zap
+  Added  (social, 6): behance, dribbble, linkedin, medium, stackoverflow, x
+  Made for Byabsayee's needs (replacing Font Awesome + emoji): everything above except the "extras".
+  Extras (added in advance, not used by Byabsayee yet, 21):
+                   bank, bookmark, calculator, clipboard, clipboard-check, cloud-upload, database, flag,
+                   gift, inbox, lightbulb, lock-open, message-square, pie-chart, receipt-percent, scan,
+                   shopping-bag, thumbs-up, user-circle, wallet-cards, wifi
+  Fixed:           ticket (the side notches bulged outside the 24x24 box and were clipped),
+                   hammer (the head poked outside the 24x24 box),
+                   (file-edit and cloud-upload were drawn inside the box from the start)
+  Checked:         all 233 files parse as XML, render non-blank, and every ui/ icon stays inside its 24x24 box.
+
+Earlier versions
+  Added  (ui):     ad, alert-circle, arrow-left, arrow-right, arrow-up, book-open, chevron-down, chevron-left, chevron-up,
+                   copy, download, external-link, eye, eye-off, file-pdf, font, globe, graduation-cap, hammer, heading,
+                   loader, lock, menu, minimize, minus, plus, plus-circle, rotate-ccw, rotate-cw, save, server, signpost,
+                   sliders, square-pen, text-size, trash, upload, user-lock, users-group, x-circle
+  Added  (social): github
+  Fixed:           settings (gear outline was malformed), key (overlapping paths), car-front (redrawn),
+                   preview.html (image-placeholder was written unclosed and swallowed signal.svg),
+                   README (car-front was listed twice)
