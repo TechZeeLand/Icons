@@ -18,7 +18,7 @@ const SHOWCASE = ["home", "search", "heart", "bell", "mail", "user", "settings",
 function home(ctx) {
   const { catalog, settings } = ctx;
   const I = (n, c) => icon(catalog, n, c);
-  const sets = catalog.sets();
+  const catCount = catalog.categories().filter((c) => c.count > 0).length;
   const shown = SHOWCASE.filter((n) => catalog.find(null, n)).slice(0, 28);
   const B = ctx.base;
   const feature = (ic, title, text) => `<div class="feature"><div class="ficon">${I(ic)}</div><h3>${title}</h3><p>${text}</p></div>`;
@@ -37,7 +37,7 @@ function home(ctx) {
     </div>
     <div class="stats-row">
         <span><strong>${catalog.list.length}</strong>icons</span>
-        <span><strong>${Object.keys(sets).length}</strong>sets</span>
+        <span><strong>${catCount}</strong>categories</span>
         <span><strong>0</strong>trackers</span>
         <span><strong>1</strong>line to install</span>
     </div>
@@ -93,7 +93,7 @@ function iconsPage(ctx) {
     </div>
     <div class="toolbar">
         <input id="q" class="grow" type="search" placeholder="Search by name or tag…" autocomplete="off" aria-label="Search icons">
-        <select id="set" aria-label="Icon set"><option value="">All sets</option></select>
+        <select id="set" aria-label="Icon category"><option value="">All categories</option></select>
         <label>Size <input id="size" type="number" min="12" max="64" value="28"></label>
         <label>Stroke <input id="stroke" type="number" min="0.5" max="3" step="0.25" value="2"></label>
         <label>Colour <input id="color" type="color" value="#0a7d69"></label>
@@ -119,16 +119,28 @@ function docs(ctx) {
   const sections = [
     ["quick-start", "Quick start"], ["css-classes", "CSS classes"], ["web-component", "Web component"], ["images", "Image tags"],
     ["javascript", "JavaScript API"], ["frameworks", "React, Vue and others"], ["customising", "Size, colour and stroke"],
-    ["caching", "Caching and freshness"], ["self-host", "Host your own cache"], ["php", "PHP"], ["api", "URL reference"],
+    ["caching", "Caching and freshness"], ["self-host", "Host your own cache"], ["php", "PHP"], ["api", "URL reference"], ["icon-names", "All icon names"],
     ["accessibility", "Accessibility"], ["licensing", "Licensing"],
   ];
+  const nameLists = catalog.categories().filter((c) => c.count > 0).map((c) => {
+    const items = catalog.list.filter((e) => e.category === c.id);
+    return `<section class="name-cat" data-cat><h3>${esc(c.label)} <span class="badge">${items.length}</span></h3>
+    <div class="name-grid">${items.map((e) => {
+      const mono = e.set !== "other";
+      const label = mono ? `zi-${e.name}` : e.name;
+      return `<button type="button" class="name-chip" data-name="${esc(e.name)}" data-tags="${esc(e.tags.join(" "))}" data-copy="${esc(label)}" title="${mono ? "Copy the class name" : "Fixed-colour artwork: use it as an image or with &lt;svg-icon&gt;; there is no zi- class"}"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#${esc(e.set)}-${esc(e.name)}"/></svg><code>${esc(label)}</code></button>`;
+    }).join("")}</div></section>`;
+  }).join("\n");
   const tocList = sections.map(([id, label]) => `<li><a href="#${id}">${label}</a></li>`).join("");
   const body = `
 <div class="docs">
   <aside class="docs-toc" aria-label="On this page"><h3>On this page</h3><ul>${tocList}</ul></aside>
   <div class="docs-body">
     <details class="docs-mobile-toc"><summary>On this page</summary><ul>${tocList}</ul></details>
-    <h1>Documentation</h1>
+    <div class="docs-head">
+      <h1>Documentation</h1>
+      <a class="btn btn-secondary" href="/docs.md" download>${icon(catalog, "download")} Download as Markdown</a>
+    </div>
     <p class="content-lede">Everything you need to use ${esc(settings.site_name)} in your own projects. If you have used Font Awesome, the CSS class method will feel familiar, with no kit script and no account.</p>
 
     <h2 id="quick-start">Quick start</h2>
@@ -149,7 +161,7 @@ function docs(ctx) {
       <tr><td><code>zi-lg</code> <code>zi-xl</code> <code>zi-2x</code> <code>zi-3x</code></td><td>Larger sizes.</td></tr>
       <tr><td><code>zi-spin</code></td><td>Continuous rotation (slows down for visitors who prefer reduced motion).</td></tr>
     </tbody></table>
-    <div class="callout"><strong>Good to know</strong>Only the icons you actually use are downloaded, one small file each, and the browser caches them. Mask icons are single-colour, so multi-colour logos (such as <code>google</code>) should use the web component or an image tag. Want a smaller stylesheet? Ask for just what you need: <code>${esc(B)}/zi.css?names=home,user,search</code>.</div>
+    <div class="callout"><strong>Good to know</strong>Only the icons you actually use are downloaded, one small file each, and the browser caches them. Mask icons are single-colour, so multi-colour logos (such as <code>google</code>) should use the web component or an image tag. Want a smaller stylesheet? Ask for just what you need: <code>${esc(B)}/zi.css?names=home,user,search</code> or one category: <code>?category=social</code>. The fixed-colour artwork in the <code>other</code> folder has no class (use the image tag).</div>
 
     <h2 id="web-component">Web component</h2>
     <p>Include the script once and use <code>&lt;svg-icon&gt;</code> anywhere. The SVG is placed inline in the page, so CSS can style every part of it.</p>
@@ -211,15 +223,21 @@ function docs(ctx) {
     <div class="table-scroll"><table><thead><tr><th>URL</th><th>Returns</th></tr></thead><tbody>
       <tr><td><code>/i/&lt;set&gt;/&lt;name&gt;.svg</code></td><td>The icon. Add <code>?size=</code> <code>&amp;stroke=</code> <code>&amp;color=</code>.</td></tr>
       <tr><td><code>/i/&lt;name&gt;.svg</code></td><td>Same, without the set (searches ui, social, other).</td></tr>
-      <tr><td><code>/zi.css</code></td><td>Stylesheet for the <code>zi</code> classes. Optional <code>?set=</code> and <code>?names=a,b,c</code>.</td></tr>
+      <tr><td><code>/zi.css</code></td><td>Stylesheet for the <code>zi</code> classes. Optional <code>?category=</code>, <code>?set=</code> and <code>?names=a,b,c</code>.</td></tr>
       <tr><td><code>/icons.js</code></td><td>Browser client (web component and <code>Icons</code> API).</td></tr>
       <tr><td><code>/sprite.svg</code></td><td>SVG sprite of <code>&lt;symbol&gt;</code>s with ids like <code>ui-home</code>. Optional <code>?set=</code>, <code>?names=</code>. Use it from the same origin only (browsers block cross-site <code>&lt;use&gt;</code>).</td></tr>
-      <tr><td><code>/api/icons</code></td><td>JSON index. Filter with <code>?q=</code> and <code>?set=</code>.</td></tr>
+      <tr><td><code>/api/icons</code></td><td>JSON index that includes the category of every icon. Filter with <code>?q=</code>, <code>?category=</code> and <code>?set=</code>.</td></tr>
       <tr><td><code>/api/manifest</code></td><td>Every icon with a content hash. Used by the sync tools.</td></tr>
       <tr><td><code>/api/version</code></td><td>Tiny JSON with the current version fingerprint.</td></tr>
       <tr><td><code>/tools/icons-sync.mjs</code></td><td>The sync script from above.</td></tr>
     </tbody></table></div>
     <p>All endpoints are open to cross-origin requests and cached for ${Math.round((Number(settings.cache_max_age) || ctx.cacheMaxAge) / 3600)} hour(s) by default.</p>
+
+    <h2 id="icon-names">All icon names</h2>
+    <p>Every icon on this server (${catalog.list.length} in total). Use the class as shown, for example <code>&lt;i class="zi zi-home"&gt;&lt;/i&gt;</code>. The name without the <code>zi-</code> prefix is what the web component, the URLs and the JavaScript API expect: <code>&lt;svg-icon name="home"&gt;</code>. Click a name to copy it.</p>
+    <div class="name-filter"><input type="search" id="name-filter" placeholder="Filter ${catalog.list.length} icons…" aria-label="Filter icon names" autocomplete="off"><span id="name-count" class="hint" aria-live="polite"></span></div>
+    ${nameLists}
+    <p class="hint" id="name-empty" hidden>No icon matches that filter.</p>
 
     <h2 id="accessibility">Accessibility</h2>
     <ul>

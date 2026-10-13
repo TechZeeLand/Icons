@@ -53,7 +53,7 @@
         review.hidden = !items.length; result.textContent = '';
         if (!items.length) return;
         var pending = items.filter(function (i) { return !i.error; });
-        api('/admin/api/icons/check', { set: setSel.value, items: pending.map(function (i) { return { name: i.name, svg: i.svg }; }) })
+        api('/admin/api/icons/check', { category: setSel.value, items: pending.map(function (i) { return { name: i.name, svg: i.svg }; }) })
             .then(function (res) {
                 var k = 0;
                 items.forEach(function (i) { if (!i.error) { var r = res.items[k++]; i.svgOut = r.svg; i.warnings = r.warnings; i.errors = r.errors; i.exists = r.exists; i.nameError = r.nameError; } });
@@ -92,7 +92,7 @@
     $('#save').addEventListener('click', function () {
         var ok = items.filter(function (i) { return i.svgOut && !i.error && !(i.errors || []).length && !i.nameError && (!i.exists || $('#overwrite').checked); });
         $('#save').disabled = true;
-        api('/admin/api/icons', { set: setSel.value, overwrite: $('#overwrite').checked, items: ok.map(function (i) { return { name: i.name, svg: i.svg }; }) })
+        api('/admin/api/icons', { category: setSel.value, overwrite: $('#overwrite').checked, items: ok.map(function (i) { return { name: i.name, svg: i.svg }; }) })
             .then(function (res) {
                 result.className = 'flash ok';
                 result.innerHTML = '';

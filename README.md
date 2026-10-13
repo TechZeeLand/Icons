@@ -9,7 +9,7 @@ sites never wait on yours, and an admin portal for managing icons. One small Nod
   Cookie Policy, License, error pages. Light/dark theme, responsive, green/cyan (#3ce9be) design.
 - **Fast by design**: ETags, `stale-while-revalidate`, browser-side icon cache in `icons.js`, a mirror mode, and a sync
   script so consumers can host the icons on their own server and still get updates on a schedule.
-- **Admin portal** at `/admin`: dashboard and anonymous stats, bulk-add icons (with automatic cleaning), edit, tag,
+- **Admin portal** at `/admin`: dashboard and anonymous stats, categories, bulk-add icons (with automatic cleaning), edit, tag,
   hide, replace, revert, export, sync now, site settings, account.
 - **Private**: no accounts for visitors, no cookies for visitors, no analytics scripts, no IP addresses stored.
 
@@ -55,13 +55,19 @@ settings, icons added in the portal, the synced repository and stats. Back it up
   are stored in the data volume and overlay the repository. *Sync & export* downloads them as a zip laid out for the repo
   so you can commit them upstream.
 
+**Categories.** *Categories* in the admin portal lets you add, rename and remove categories (each has an icon style that decides
+how uploads are cleaned). Icons without a category, and icons from a category you remove, move to the built-in **Extras**
+category. Moving an icon never changes its file or URL (`/i/ui/home.svg` keeps working). Categories are stored in the data
+volume, not in git; exports include a `categories.json` for reference.
+
 The portal never deletes repository icons; it can hide them, replace them (and revert), or delete icons it added itself.
 
 ## How other people use it
 
 The `/docs` page of your deployment documents everything with your own URL filled in: CSS classes, web component, image
 tags, JavaScript API, frameworks, caching, self-hosting a cache (Docker mirror, `icons-sync.mjs` with cron or CI, Nginx or
-Caddy proxy cache), PHP helper, URL reference, accessibility, licensing.
+Caddy proxy cache), PHP helper, URL reference, a searchable list of every icon name (`zi-home`, …), accessibility, licensing. The docs page has a *Download as Markdown*
+button (`/docs.md`) that exports everything, with your URL and all icon names, as one file to share.
 
 ```html
 <link rel="stylesheet" href="https://icons.example.com/zi.css">

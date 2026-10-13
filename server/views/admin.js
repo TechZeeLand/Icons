@@ -8,6 +8,7 @@ const NAV = [
   ["dashboard", "/admin", "Dashboard", "dashboard"],
   ["icons", "/admin/icons", "Icons", "grid"],
   ["add", "/admin/add", "Add icons", "upload"],
+  ["categories", "/admin/categories", "Categories", "tag"],
   ["sync", "/admin/sync", "Sync & export", "cloud-download"],
   ["settings", "/admin/settings", "Site settings", "sliders"],
   ["account", "/admin/account", "Account", "key"],
@@ -125,6 +126,7 @@ function dashboard(ctx, { stats, sync, query }) {
 <div class="cards">
   <div class="stat"><span>${catalog.list.length}</span>public icons</div>
   <div class="stat"><span>${custom}</span>added or edited here</div>
+  <div class="stat"><span>${catalog.categoryList().length}</span>categories</div>
   <div class="stat"><span>${hidden}</span>hidden</div>
   <div class="stat"><span>${stats.today.icons}</span>icons served today</div>
   <div class="stat"><span>${stats.total}</span>icons served (90 days)</div>
@@ -155,18 +157,19 @@ function dashboard(ctx, { stats, sync, query }) {
 }
 
 const PAGE = 60;
-function iconsList(ctx, { entries, q, set, source, page, query }) {
+function iconsList(ctx, { entries, q, category, source, page, query }) {
   const { catalog } = ctx;
   const I = (n) => icon(catalog, n);
   const pages = Math.max(1, Math.ceil(entries.length / PAGE));
   const p = Math.min(Math.max(1, page), pages);
   const slice = entries.slice((p - 1) * PAGE, p * PAGE);
-  const qs = (n) => { const u = new URLSearchParams(); if (q) u.set("q", q); if (set) u.set("set", set); if (source) u.set("source", source); if (n > 1) u.set("page", n); const s = u.toString(); return "/admin/icons" + (s ? "?" + s : ""); };
-  const sets = [...new Set(catalog.all.map((e) => e.set))];
+  const qs = (n) => { const u = new URLSearchParams(); if (q) u.set("q", q); if (category) u.set("category", category); if (source) u.set("source", source); if (n > 1) u.set("page", n); const s = u.toString(); return "/admin/icons" + (s ? "?" + s : ""); };
+  const cats = catalog.categories();
+  const catLabel = Object.fromEntries(cats.map((c) => [c.id, c.label]));
   const body = `
 <form class="filters" method="get" action="/admin/icons">
   <input type="search" name="q" value="${esc(q)}" placeholder="Search name or tag…" aria-label="Search">
-  <select name="set" aria-label="Set"><option value="">All sets</option>${sets.map((s) => `<option${s === set ? " selected" : ""}>${esc(s)}</option>`).join("")}</select>
+  <select name="category" aria-label="Category"><option value="">All categories</option>${cats.map((c) => `<option value="${esc(c.id)}"${c.id === category ? " selected" : ""}>${esc(c.label)} (${c.total})</option>`).join("")}</select>
   <select name="source" aria-label="Source">
     <option value="">Any source</option>
     <option value="repo"${source === "repo" ? " selected" : ""}>From repository</option>
@@ -183,7 +186,7 @@ function iconsList(ctx, { entries, q, set, source, page, query }) {
 ${slice.map((e) => `<a class="tile${e.hidden ? " is-hidden" : ""}" href="/admin/icons/edit?key=${encodeURIComponent(e.key)}" title="${esc(e.key)}">
   <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#${esc(e.set)}-${esc(e.name)}"/></svg>
   <span class="tile-name">${esc(e.name)}</span>
-  <span class="tile-meta">${esc(e.set)}${e.source !== "repo" ? ` · <b>${e.source === "custom" ? "new" : "edited"}</b>` : ""}${e.hidden ? " · hidden" : ""}</span>
+  <span class="tile-meta">${esc(catLabel[e.category] || e.category)}${e.source !== "repo" ? ` · <b>${e.source === "custom" ? "new" : "edited"}</b>` : ""}${e.hidden ? " · hidden" : ""}</span>
 </a>`).join("")}
 </div>
 ${!slice.length ? '<p class="hint">No icons match these filters.</p>' : ""}
@@ -191,17 +194,17 @@ ${pages > 1 ? `<div class="pager">${p > 1 ? `<a class="btn" href="${qs(p - 1)}">
   return shell(ctx, { title: "Icons", active: "icons", body, query });
 }
 
-function addIcons(ctx, { sets, query }) {
+function addIcons(ctx, { categories, query }) {
   const I = (n) => icon(ctx.catalog, n);
   const body = `
 <section class="panel">
   <h2>1. Choose files or paste code</h2>
-  <p class="hint">Drop one or many <code>.svg</code> files. Every file is cleaned before saving: scripts, metadata and editor junk are removed, <code>ui</code> icons are checked against the 24&times;24 grid and recoloured to <code>currentColor</code>. Names come from the file names.</p>
+  <p class="hint">Drop one or many <code>.svg</code> files. Every file is cleaned before saving: scripts, metadata and editor junk are removed, line icons are checked against the 24&times;24 grid and recoloured to <code>currentColor</code>. Names come from the file names.</p>
   <div class="grid2">
     <div>
-      <label for="set">Set</label>
-      <select id="set">${sets.map((s) => `<option>${esc(s)}</option>`).join("")}</select>
-      <p class="hint"><code>ui</code> = line icons on a 24 grid. <code>social</code> = brand glyphs. <code>other</code> = project artwork.</p>
+      <label for="set">Category</label>
+      <select id="set">${categories.map((c) => `<option value="${esc(c.id)}">${esc(c.label)}</option>`).join("")}</select>
+      <p class="hint">Line-icon categories are checked against the 24&times;24 grid and recoloured to <code>currentColor</code>. Need a new category? <a href="/admin/categories">Manage categories</a>.</p>
     </div>
     <div>
       <label class="check"><input type="checkbox" id="overwrite"> <span>Replace icons that already exist</span></label>
@@ -241,6 +244,7 @@ function editIcon(ctx, { entry, repoVersion, query }) {
       <div class="preview small"><svg viewBox="0 0 24 24" class="p-sm" aria-hidden="true"><use href="#${esc(entry.set)}-${esc(entry.name)}"/></svg><svg viewBox="0 0 24 24" class="p-xs" aria-hidden="true"><use href="#${esc(entry.set)}-${esc(entry.name)}"/></svg></div>
     </div>
     <table><tbody>
+      <tr><th>Category</th><td>${esc((ctx.catalog.category(entry.category) || {}).label || entry.category)}</td></tr>
       <tr><th>Source</th><td>${entry.source === "repo" ? "Repository" : entry.source === "custom" ? "Added in this portal" : "Repository icon, replaced in this portal"}</td></tr>
       <tr><th>Public URL</th><td><a href="/i/${esc(entry.key)}.svg" target="_blank" rel="noopener"><code>/i/${esc(entry.key)}.svg</code></a></td></tr>
       <tr><th>CSS class</th><td><code>zi zi-${esc(entry.name)}</code></td></tr>
@@ -256,6 +260,9 @@ function editIcon(ctx, { entry, repoVersion, query }) {
     <h2>Edit</h2>
     <form method="post" action="/admin/icons/save">
       ${csrf(ctx)}<input type="hidden" name="key" value="${esc(entry.key)}">
+      <label for="category">Category</label>
+      <select id="category" name="category">${ctx.catalog.categoryList().map((c) => `<option value="${esc(c.id)}"${c.id === entry.category ? " selected" : ""}>${esc(c.label)}</option>`).join("")}</select>
+      <p class="hint">Move the icon to another category. The icon's URL does not change.</p>
       <label for="tags">Tags</label>
       <input type="text" id="tags" name="tags" value="${esc(entry.tags.join(", "))}" placeholder="arrow, direction, navigation">
       <p class="hint">Comma separated. Tags make the icon easier to find in search.</p>
@@ -268,6 +275,45 @@ function editIcon(ctx, { entry, repoVersion, query }) {
 </div>
 <p><a href="/admin/icons">&larr; Back to all icons</a></p>`;
   return shell(ctx, { title: entry.name, active: "icons", body, query });
+}
+
+const KINDS = [
+  ["line", "Line icons: 24×24 grid, follows text colour"],
+  ["brand", "Filled or brand glyphs: any grid, viewBox required"],
+  ["free", "Free-form artwork: fixed colours allowed"],
+];
+
+function categoriesPage(ctx, { categories, query }) {
+  const I = (n) => icon(ctx.catalog, n);
+  const kindSel = (cur, id) => `<select name="kind" aria-label="Icon style"${id ? "" : ""}>${KINDS.map(([k, l]) => `<option value="${k}"${k === cur ? " selected" : ""}>${esc(l)}</option>`).join("")}</select>`;
+  const body = `
+<section class="panel">
+  <h2>Add a category</h2>
+  <form method="post" action="/admin/categories/add" class="inline-form">
+    ${csrf(ctx)}
+    <div><label for="new-label">Name</label><input type="text" id="new-label" name="label" maxlength="40" required placeholder="e.g. Dev tools"></div>
+    <div><label for="new-kind">Icon style</label>${kindSel("line")}</div>
+    <div><button class="btn primary" type="submit">${I("plus")} Add category</button></div>
+  </form>
+  <p class="hint">The style decides how icons uploaded to this category are cleaned. It does not affect icons already saved.</p>
+</section>
+<section class="panel">
+  <h2>Categories</h2>
+  <p class="hint">Icons without a category, and icons from a category you remove, are moved to <strong>Extras</strong>. Extras always exists and cannot be removed.</p>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Name</th><th>Icon style</th><th class="num">Icons</th><th></th></tr></thead>
+    <tbody>${categories.map((c) => c.locked
+      ? `<tr><td><strong>${esc(c.label)}</strong> <span class="pill off">built in</span></td><td>Catch-all</td><td class="num"><a href="/admin/icons?category=${esc(c.id)}">${c.total}</a></td><td class="muted">Cannot be changed</td></tr>`
+      : `<tr>
+      <td colspan="2"><form method="post" action="/admin/categories/update" class="inline-form tight">${csrf(ctx)}<input type="hidden" name="id" value="${esc(c.id)}">
+        <input type="text" name="label" value="${esc(c.label)}" maxlength="40" required aria-label="Name of ${esc(c.label)}">${kindSel(c.kind)}<button class="btn sm" type="submit">Save</button></form></td>
+      <td class="num"><a href="/admin/icons?category=${esc(c.id)}">${c.total}</a></td>
+      <td><form method="post" action="/admin/categories/remove" data-confirm="Remove the category &quot;${esc(c.label)}&quot;? ${c.total} icon(s) will be moved to Extras.">${csrf(ctx)}<input type="hidden" name="id" value="${esc(c.id)}"><button class="btn sm danger" type="submit">${I("trash")} Remove</button></form></td>
+    </tr>`).join("")}</tbody>
+  </table></div>
+  <p class="hint">Categories are stored on this server. Icon files and their public URLs (<code>/i/ui/home.svg</code>) never change when you move or remove a category. Hidden icons are counted here too.</p>
+</section>`;
+  return shell(ctx, { title: "Categories", active: "categories", body, query });
 }
 
 function syncPage(ctx, { sync, cfg, customCount, query }) {
@@ -357,4 +403,4 @@ function accountPage(ctx, { username, query }) {
   return shell(ctx, { title: "Account", active: "account", body, query });
 }
 
-module.exports = { login, setup, dashboard, iconsList, addIcons, editIcon, syncPage, settingsPage, accountPage };
+module.exports = { login, setup, dashboard, iconsList, addIcons, editIcon, categoriesPage, syncPage, settingsPage, accountPage };

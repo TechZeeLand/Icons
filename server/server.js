@@ -21,6 +21,7 @@ const { sanitize } = require("./lib/sanitize");
 const { zip } = require("./lib/zip");
 const { layout } = require("./views/layout");
 const pub = require("./views/public");
+const { docsMarkdown } = require("./views/docs-md");
 const adminViews = require("./views/admin");
 
 const catalog = new Catalog();
@@ -62,12 +63,14 @@ function notFound(req, res, ctx) {
 
 const parseNames = (v) => (v ? String(v).split(",").map((s) => s.trim()).filter((s) => cfg.NAME_RE.test(s)).slice(0, 2000) : null);
 
-function pickEntries(params, defaultSets) {
+/** ?names=a,b  ?set=ui (folder)  ?category=social. Without filters: everything, minus the fixed-colour "other" artwork when maskable=true. */
+function pickEntries(params, maskable) {
   const names = parseNames(params.get("names"));
   const set = params.get("set");
-  if (set && !cfg.NAME_RE.test(set)) return null;
+  const category = params.get("category");
+  if ((set && !cfg.NAME_RE.test(set)) || (category && !cfg.NAME_RE.test(category))) return null;
   if (names) return [...new Set(names)].map((n) => catalog.find(set, n)).filter(Boolean);
-  return catalog.list.filter((e) => (set ? e.set === set : defaultSets ? defaultSets.includes(e.set) : true));
+  return catalog.list.filter((e) => (!set || e.set === set) && (!category || e.category === category) && !(maskable && !set && !category && e.set === "other"));
 }
 
 // ------------------------------------------------------------------ public routes
@@ -112,18 +115,19 @@ async function publicRoutes(req, res, ctx, url) {
       return H.json(req, res, 200, catalog.manifest(), { "Cache-Control": "public, max-age=60" });
     case "/api/icons": {
       stats.bump("api");
-      const set = url.searchParams.get("set") || "";
-      const icons = catalog.search(url.searchParams.get("q"), set).map((e) => ({ set: e.set, name: e.name, tags: e.tags }));
-      return H.json(req, res, 200, { version: catalog.version, commit: sync.state.rev || null, total: catalog.list.length, sets: catalog.sets(), icons }, { "Cache-Control": "public, max-age=60" });
+      const icons = catalog.search(url.searchParams.get("q"), { set: url.searchParams.get("set") || "", category: url.searchParams.get("category") || "" })
+        .map((e) => ({ set: e.set, name: e.name, category: e.category, tags: e.tags }));
+      const categories = catalog.categories().filter((c) => c.count > 0).map((c) => ({ id: c.id, label: c.label, count: c.count }));
+      return H.json(req, res, 200, { version: catalog.version, commit: sync.state.rev || null, total: catalog.list.length, categories, sets: catalog.sets(), icons }, { "Cache-Control": "public, max-age=60" });
     }
     case "/sprite.svg": {
-      const list = pickEntries(url.searchParams, null);
+      const list = pickEntries(url.searchParams, false);
       if (!list) return H.text(req, res, 400, "Bad set");
       stats.bump("api");
       return H.sendCached(req, res, spriteSvg(list), "image/svg+xml; charset=utf-8", `sprite|${catalog.version}|${url.search}`, { maxAge: maxAge(), extra: { "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; sandbox" } });
     }
     case "/zi.css": {
-      const list = pickEntries(url.searchParams, ["ui", "social"]);
+      const list = pickEntries(url.searchParams, true);
       if (!list) return H.text(req, res, 400, "Bad set");
       stats.bump("api");
       return H.sendCached(req, res, maskCss(list), "text/css; charset=utf-8", `zi|${catalog.version}|${url.search}`, { maxAge: maxAge() });
@@ -131,6 +135,15 @@ async function publicRoutes(req, res, ctx, url) {
     case "/icons.js":
       stats.bump("api");
       return H.sendCached(req, res, read(cfg.CLIENT_DIR, "icons.js"), "text/javascript; charset=utf-8", "client", { maxAge: Math.min(maxAge(), 3600) });
+    case "/docs.md": {
+      const md = docsMarkdown(ctx);
+      const slug = String(ctx.settings.site_name).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "icons";
+      return H.send(req, res, 200, md, {
+        "Content-Type": "text/markdown; charset=utf-8",
+        "Content-Disposition": `attachment; filename="${slug}-docs.md"`,
+        "Cache-Control": "no-cache",
+      });
+    }
     case "/tools/icons-sync.mjs": {
       const src = read(cfg.TOOLS_DIR, "icons-sync.mjs").toString("utf8").replace(/__DEFAULT_ORIGIN__/g, ctx.base);
       return H.send(req, res, 200, src, { "Content-Type": "text/javascript; charset=utf-8", "Content-Disposition": 'inline; filename="icons-sync.mjs"', "Cache-Control": "public, max-age=3600" });
@@ -238,6 +251,7 @@ async function adminRoutes(req, res, ctx, url) {
   if (!sess) return p.startsWith("/admin/api/") ? H.json(req, res, 401, { error: "Not signed in" }) : H.redirect(res, admin.exists() ? "/admin/login" : "/admin/setup");
   ctx.session = sess;
   const done = (to, kind, msg) => redirectTo(res, to, kind, msg);
+  const styleOf = (catId) => ({ line: "ui", brand: "social", free: "other" })[(catalog.category(catId) || {}).kind] || "other";
 
   let body = {};
   const isApi = p.startsWith("/admin/api/");
@@ -262,14 +276,14 @@ async function adminRoutes(req, res, ctx, url) {
 
     case "GET /admin/icons": {
       const q = (query.q || "").toLowerCase().trim();
-      const set = query.set || "";
+      const category = query.category || "";
       const source = query.source || "";
       const terms = q.split(/[\s,]+/).filter(Boolean);
       const entries = catalog.all.filter((e) =>
-        (!set || e.set === set) &&
+        (!category || e.category === category) &&
         (!source || (source === "hidden" ? e.hidden : e.source === source)) &&
         terms.every((t) => e.name.includes(t) || e.tags.some((x) => x.includes(t))));
-      return page(adminViews.iconsList(ctx, { entries, q, set, source, page: parseInt(query.page, 10) || 1, query }));
+      return page(adminViews.iconsList(ctx, { entries, q, category, source, page: parseInt(query.page, 10) || 1, query }));
     }
 
     case "GET /admin/icons/edit": {
@@ -284,11 +298,12 @@ async function adminRoutes(req, res, ctx, url) {
       const back = `/admin/icons/edit?key=${encodeURIComponent(entry.key)}`;
       const src = String(body.svg || "");
       if (src.trim() && src.trim() !== entry.svg.trim()) {
-        const out = sanitize(src, { set: entry.set });
+        const out = sanitize(src, { set: styleOf(entry.category) });
         if (out.errors.length) return done(back, "err", out.errors[0]);
         catalog.saveCustom(entry.set, entry.name, out.svg);
       }
       catalog.setTags(entry.key, String(body.tags || "").split(","));
+      if (body.category && body.category !== entry.category && catalog.category(body.category)) catalog.setCategory(entry.key, body.category);
       return done(back, "ok", "Saved");
     }
 
@@ -307,23 +322,24 @@ async function adminRoutes(req, res, ctx, url) {
     }
 
     case "GET /admin/add":
-      return page(adminViews.addIcons(ctx, { sets: [...new Set([...cfg.SET_ORDER, ...catalog.all.map((e) => e.set)])], query }));
+      return page(adminViews.addIcons(ctx, { categories: catalog.categoryList(), query }));
 
     case "POST /admin/api/icons/check":
     case "POST /admin/api/icons": {
       const saving = p === "/admin/api/icons";
-      const set = String(body.set || "");
-      const allowed = new Set([...cfg.SET_ORDER, ...catalog.all.map((e) => e.set)]);
-      if (!allowed.has(set)) return H.json(req, res, 400, { error: "Unknown set" });
+      const cat = catalog.category(String(body.category || ""));
+      if (!cat) return H.json(req, res, 400, { error: "Unknown category" });
+      const set = cat.id; // new icons are stored in a folder named after their category
+      const style = styleOf(cat.id);
       const items = Array.isArray(body.items) ? body.items.slice(0, 200) : [];
       const results = items.map((it) => {
         const name = String(it.name || "");
         const r = { name, warnings: [], errors: [], svg: "", exists: false, nameError: "" };
         if (!cfg.NAME_RE.test(name)) { r.nameError = "Use lower-case letters, numbers and dashes (max 64)."; return r; }
         const clash = catalog.all.find((e) => e.name === name && e.set !== set);
-        if (clash) r.nameError = `The name is already used in the ${clash.set} set. Names must be unique across sets.`;
+        if (clash) r.nameError = `The name is already used by ${clash.key}. Names are unique across categories; edit that icon from the Icons page instead.`;
         r.exists = catalog.byKey.has(`${set}/${name}`);
-        const out = sanitize(String(it.svg || ""), { set });
+        const out = sanitize(String(it.svg || ""), { set: style });
         Object.assign(r, { svg: out.svg, warnings: out.warnings, errors: out.errors });
         return r;
       });
@@ -349,9 +365,32 @@ async function adminRoutes(req, res, ctx, url) {
 
     case "GET /admin/export.zip": {
       const all = query.scope === "all";
-      const files = (all ? catalog.list : catalog.customEntries()).map((e) => ({ name: `icons/${e.set}/${e.name}.svg`, data: e.svg }));
+      const entries = all ? catalog.list : catalog.customEntries();
+      const files = entries.map((e) => ({ name: `icons/${e.set}/${e.name}.svg`, data: e.svg }));
+      if (files.length) files.push({ name: "categories.json", data: JSON.stringify({ categories: catalog.categoryList().map(({ id, label, kind }) => ({ id, label, kind })), assignments: Object.fromEntries(entries.map((e) => [e.key, e.category])) }, null, 2) });
       if (!files.length) return done("/admin/sync", "err", "There are no added or edited icons to export");
       return H.send(req, res, 200, zip(files), { "Content-Type": "application/zip", "Content-Disposition": `attachment; filename="icons-${all ? "all" : "custom"}-${new Date().toISOString().slice(0, 10)}.zip"`, ...noStore, "Access-Control-Allow-Origin": null }, { compress: false });
+    }
+
+    case "GET /admin/categories":
+      return page(adminViews.categoriesPage(ctx, { categories: catalog.categories(), query }));
+
+    case "POST /admin/categories/add": {
+      try { const id = catalog.addCategory(body.label, body.kind); return done("/admin/categories", "ok", `Category "${catalog.category(id).label}" created`); }
+      catch (e) { return done("/admin/categories", "err", e.message); }
+    }
+
+    case "POST /admin/categories/update": {
+      try { catalog.updateCategory(body.id, body.label, body.kind); return done("/admin/categories", "ok", "Category updated"); }
+      catch (e) { return done("/admin/categories", "err", e.message); }
+    }
+
+    case "POST /admin/categories/remove": {
+      try {
+        const label = (catalog.category(body.id) || {}).label;
+        const n = catalog.removeCategory(body.id);
+        return done("/admin/categories", "ok", `Category "${label}" removed. ${n} icon${n === 1 ? "" : "s"} moved to Extras.`);
+      } catch (e) { return done("/admin/categories", "err", e.message); }
     }
 
     case "GET /admin/settings":

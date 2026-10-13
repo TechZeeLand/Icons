@@ -188,6 +188,8 @@ html:not(.js) .tab-panel::before { content: attr(data-title); display: block; fo
 .docs-toc a:hover { color: var(--text); }
 .docs-toc a.on { color: var(--accent-text); border-left-color: var(--accent-text); font-weight: 700; }
 .docs-body { min-width: 0; max-width: 820px; }
+.docs-head { display: flex; align-items: center; justify-content: space-between; gap: 12px 16px; flex-wrap: wrap; margin-bottom: 6px; }
+.docs-head h1 { margin: 0; }
 .docs-body h1 { font-size: 2rem; margin: 0 0 6px; }
 .docs-body h2 { font-size: 1.35rem; margin: 44px 0 10px; padding-top: 6px; }
 .docs-body h3 { font-size: 1.05rem; margin: 26px 0 8px; }
@@ -202,6 +204,16 @@ html:not(.js) .tab-panel::before { content: attr(data-title); display: block; fo
 .badge { display: inline-block; padding: 1px 9px; border-radius: 999px; font-size: .72rem; font-weight: 800; background: var(--accent-soft); color: var(--accent-text); vertical-align: middle; margin-left: 6px; }
 .docs-mobile-toc { display: none; }
 .live-demo { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; padding: 14px 16px; border: 1px dashed var(--border); border-radius: 10px; margin: 0 0 16px; font-size: 1.6rem; }
+
+.name-filter { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 10px 0 6px; }
+.name-filter input { max-width: 340px; }
+.name-cat h3 { margin: 22px 0 10px; }
+.name-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 6px; }
+.name-chip { display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font: inherit; cursor: pointer; text-align: left; min-width: 0; }
+.name-chip:hover, .name-chip:focus-visible { border-color: var(--accent-text); }
+.name-chip .icon { width: 20px; height: 20px; flex: none; color: var(--accent-text); }
+.name-chip code { background: none; padding: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .8rem; }
+.name-chip[hidden], .name-cat[hidden] { display: none; }
 
 /* ---- Gallery ---- */
 .gallery-head h1 { font-size: 1.7rem; margin: 0 0 4px; }

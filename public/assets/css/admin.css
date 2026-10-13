@@ -109,3 +109,15 @@ html[data-theme="dark"] .side-btn .icon-moon { display: inline-block; }
     .item { grid-template-columns: 52px minmax(0, 1fr); }
     .item .btn { grid-column: 1 / -1; justify-self: start; }
 }
+
+.inline-form { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
+.inline-form > div { min-width: 180px; flex: 1 1 200px; }
+.inline-form > div:last-child { flex: 0 0 auto; min-width: 0; }
+.inline-form label { margin-top: 0; }
+.inline-form.tight { align-items: center; flex-wrap: nowrap; }
+.inline-form.tight input[type=text] { flex: 1 1 160px; min-width: 120px; }
+.inline-form.tight select { flex: 2 1 220px; width: auto; min-width: 0; }
+.inline-form.tight .btn { flex: none; }
+.muted { color: var(--muted); font-size: .85rem; }
+.table-scroll { overflow-x: auto; }
+@media (max-width: 640px) { .inline-form.tight { flex-wrap: wrap; } }

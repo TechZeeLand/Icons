@@ -50,7 +50,15 @@ const settings = {
 };
 
 const adminFile = new JsonFile("admin.json", { username: "", hash: "" });
-const metaFile = new JsonFile("meta.json", { tags: {}, hidden: [] });
+const DEFAULT_CATEGORIES = [
+  { id: "ui", label: "UI", kind: "line" },
+  { id: "social", label: "Social", kind: "brand" },
+  { id: "other", label: "Other", kind: "free" },
+  { id: "extras", label: "Extras", kind: "free", locked: true },
+];
+// categories: ordered list. category: per-icon assignment ("set/name" -> category id). Icons without one use the category
+// that matches their folder, or "extras".
+const metaFile = new JsonFile("meta.json", { tags: {}, hidden: [], categories: DEFAULT_CATEGORIES, category: {} });
 const statsFile = new JsonFile("stats.json", { days: {}, top: {} });
 
 // A secret that survives restarts (used to sign nothing sensitive today, reserved for tokens).

@@ -29,9 +29,39 @@
     }
     document.addEventListener('click', function (e) {
         var b = e.target.closest && e.target.closest('.code .copy');
-        if (!b) return;
-        copyText(b.parentNode.querySelector('code').textContent, b);
+        if (b) { copyText(b.parentNode.querySelector('code').textContent, b); return; }
+        var chip = e.target.closest && e.target.closest('.name-chip');
+        if (chip) {
+            var code = chip.querySelector('code'), old = code.textContent;
+            var done = function () { code.textContent = 'copied'; setTimeout(function () { code.textContent = old; }, 900); };
+            var txt = chip.getAttribute('data-copy');
+            if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(txt).then(done, function () {});
+            else { var t = document.createElement('textarea'); t.value = txt; t.style.position = 'fixed'; t.style.opacity = '0'; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); done(); } catch (er) { /* ignore */ } t.remove(); }
+        }
     });
+
+    /* ---- Docs: filter the icon name list ---- */
+    (function () {
+        var input = document.getElementById('name-filter');
+        if (!input) return;
+        var chips = $$('.name-chip'), cats = $$('[data-cat]'), count = document.getElementById('name-count'), empty = document.getElementById('name-empty');
+        function apply() {
+            var terms = input.value.trim().toLowerCase().replace(/^zi-/, '').split(/[\s,]+/).filter(Boolean), shown = 0;
+            chips.forEach(function (c) {
+                var hay = c.getAttribute('data-name') + ' ' + c.getAttribute('data-tags');
+                var ok = terms.every(function (t) { return hay.indexOf(t) !== -1; });
+                c.hidden = !ok; if (ok) shown++;
+            });
+            cats.forEach(function (s) { s.hidden = !s.querySelector('.name-chip:not([hidden])'); });
+            count.textContent = terms.length ? shown + ' of ' + chips.length + ' shown' : '';
+            empty.hidden = shown !== 0;
+        }
+        input.addEventListener('input', apply);
+        // One request for the sprite; the previews then reference it inside this page.
+        fetch('sprite.svg').then(function (r) { return r.text(); }).then(function (t) {
+            var h = document.createElement('div'); h.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden'; h.setAttribute('aria-hidden', 'true'); h.innerHTML = t; document.body.prepend(h);
+        }).catch(function () { /* previews are optional */ });
+    })();
 
     /* ---- Tabs ---- */
     $$('[data-tabs]').forEach(function (box, n) {
@@ -71,7 +101,7 @@
     var gal = document.getElementById('gallery');
     if (!gal) return;
     var q = $('#q'), setSel = $('#set'), sizeIn = $('#size'), strokeIn = $('#stroke'), colorIn = $('#color'), grid = $('#grid'), meta = $('#meta');
-    var root = document.documentElement, color = null, icons = [], total = 0, commit = null;
+    var root = document.documentElement, color = null, icons = [], total = 0, commit = null, catLabel = {};
     var base = cfg.base || location.origin;
 
     Promise.all([
@@ -83,10 +113,10 @@
         holder.innerHTML = res[0];
         document.body.prepend(holder);
         icons = res[1].icons; total = res[1].total; commit = res[1].commit;
-        Object.keys(res[1].sets).forEach(function (s) { setSel.add(new Option(s + ' (' + res[1].sets[s] + ')', s)); });
+        res[1].categories.forEach(function (c) { catLabel[c.id] = c.label; setSel.add(new Option(c.label + ' (' + c.count + ')', c.id)); });
         var p = new URLSearchParams(location.search);
         if (p.get('q')) q.value = p.get('q');
-        if (p.get('set')) setSel.value = p.get('set');
+        if (p.get('category')) setSel.value = p.get('category');
         style(); paint();
         if (location.hash.length > 1) { var m = icons.filter(function (i) { return i.set + '/' + i.name === location.hash.slice(1); })[0]; if (m) openIcon(m); }
     }).catch(function (e) { meta.textContent = 'Could not load icons: ' + e.message; });
@@ -94,7 +124,7 @@
     function paint() {
         var terms = q.value.trim().toLowerCase().split(/[\s,]+/).filter(Boolean), set = setSel.value;
         var list = icons.filter(function (i) {
-            if (set && i.set !== set) return false;
+            if (set && i.category !== set) return false;
             return terms.every(function (t) { return i.name.indexOf(t) !== -1 || (i.tags || []).some(function (x) { return x.indexOf(t) !== -1; }); });
         });
         meta.textContent = list.length + ' of ' + total + ' icons';
@@ -109,7 +139,7 @@
         });
         grid.replaceChildren(frag);
         if (!list.length) grid.innerHTML = '<p class="empty">No icons match. Try a shorter word.</p>';
-        var u = new URL(location.href); q.value ? u.searchParams.set('q', q.value) : u.searchParams.delete('q'); set ? u.searchParams.set('set', set) : u.searchParams.delete('set');
+        var u = new URL(location.href); q.value ? u.searchParams.set('q', q.value) : u.searchParams.delete('q'); set ? u.searchParams.set('category', set) : u.searchParams.delete('category');
         history.replaceState(null, '', u.pathname + u.search + u.hash);
     }
 
@@ -130,7 +160,7 @@
     var dlg = $('#dlg');
     function openIcon(i) {
         $('#biguse').setAttribute('href', '#' + i.set + '-' + i.name);
-        $('#dname').textContent = i.name; $('#dset').textContent = 'Set: ' + i.set + (i.tags && i.tags.length ? ' · ' + i.tags.join(', ') : '');
+        $('#dname').textContent = i.name; $('#dset').textContent = 'Category: ' + (catLabel[i.category] || i.category) + (i.tags && i.tags.length ? ' · ' + i.tags.join(', ') : '');
         var url = base + '/i/' + i.set + '/' + i.name + '.svg' + qs();
         $('#dl').href = '/i/' + i.set + '/' + i.name + '.svg'; $('#dl').setAttribute('download', i.name + '.svg');
         var size = sizeIn.value;

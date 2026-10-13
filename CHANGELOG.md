@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.2.0
+
+- Docs: "Download as Markdown" button. `/docs.md` returns the whole documentation as one shareable Markdown file with this
+  server's URL filled in and every icon name listed by category.
+
+## 2.1.0
+
+- Admin: add, rename and remove categories; icons without a category or from a removed category move to Extras; move an
+  icon between categories from its edit page; category chosen when adding icons.
+- `/api/icons` now reports each icon's category and the category list; `zi.css` and `sprite.svg` accept `?category=`.
+- Docs: new "All icon names" section listing every icon as `zi-<name>`, filterable, click to copy.
+
 ## 2.0.0 - full service
 
 - Public website (home, icon browser, docs, about, contact, privacy, terms, cookies, license, error pages) with light/dark

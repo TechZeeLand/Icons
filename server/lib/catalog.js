@@ -57,12 +57,17 @@ class Catalog {
       merged.set(e.key, { ...e, source: prev ? "override" : "custom" });
     }
     const hidden = new Set(metaFile.data.hidden);
-    const all = [...merged.values()].sort((a, b) => rank(a.set) - rank(b.set) || a.set.localeCompare(b.set) || a.name.localeCompare(b.name));
+    const cats = this.categoryList();
+    const order = new Map(cats.map((c, i) => [c.id, i]));
+    const all = [...merged.values()];
     for (const e of all) {
       e.hidden = hidden.has(e.key);
       e.tags = metaFile.data.tags[e.key] || [];
       e.hash = sha(e.svg).slice(0, 10);
+      const assigned = metaFile.data.category[e.key];
+      e.category = assigned && order.has(assigned) ? assigned : order.has(e.set) ? e.set : "extras";
     }
+    all.sort((a, b) => order.get(a.category) - order.get(b.category) || rank(a.set) - rank(b.set) || a.set.localeCompare(b.set) || a.name.localeCompare(b.name));
     const list = all.filter((e) => !e.hidden);
     if (!list.length && this.list.length) return false; // never wipe a working catalog
     this.all = all;
@@ -74,14 +79,82 @@ class Catalog {
     return true;
   }
 
+  // ---- categories ----
+  /** Ordered category definitions; "extras" always exists and is always last. */
+  categoryList() {
+    const list = metaFile.data.categories.filter((c) => c.id !== "extras");
+    const extras = metaFile.data.categories.find((c) => c.id === "extras") || { id: "extras", label: "Extras", kind: "free", locked: true };
+    return [...list, { ...extras, label: "Extras", kind: "free", locked: true }];
+  }
+
+  /** Categories with icon counts: count = visible on the site, total = including hidden. */
+  categories() {
+    return this.categoryList().map((c) => ({
+      ...c,
+      count: this.list.filter((e) => e.category === c.id).length,
+      total: this.all.filter((e) => e.category === c.id).length,
+    }));
+  }
+
+  category(id) { return this.categoryList().find((c) => c.id === id) || null; }
+
+  addCategory(label, kind) {
+    label = String(label || "").trim().replace(/\s+/g, " ").slice(0, 40);
+    if (!label) throw new Error("Enter a category name.");
+    if (!["line", "brand", "free"].includes(kind)) throw new Error("Choose an icon style.");
+    const id = label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 32);
+    if (!NAME_RE.test(id)) throw new Error("The name must contain letters or numbers.");
+    if (this.category(id)) throw new Error(`A category called "${this.category(id).label}" already exists.`);
+    const list = metaFile.data.categories.filter((c) => c.id !== "extras");
+    list.push({ id, label, kind });
+    metaFile.data.categories = [...list, ...metaFile.data.categories.filter((c) => c.id === "extras")];
+    metaFile.save();
+    this.reload();
+    return id;
+  }
+
+  updateCategory(id, label, kind) {
+    const c = this.category(id);
+    if (!c || c.locked) throw new Error("This category cannot be changed.");
+    label = String(label || "").trim().replace(/\s+/g, " ").slice(0, 40);
+    if (!label) throw new Error("Enter a category name.");
+    if (!["line", "brand", "free"].includes(kind)) throw new Error("Choose an icon style.");
+    const target = metaFile.data.categories.find((x) => x.id === id);
+    target.label = label;
+    target.kind = kind;
+    metaFile.save();
+    this.reload();
+  }
+
+  /** Removes a category; every icon in it moves to Extras. Returns how many icons moved. */
+  removeCategory(id) {
+    const c = this.category(id);
+    if (!c || c.locked) throw new Error("This category cannot be removed.");
+    let moved = 0;
+    for (const e of this.all) {
+      if (e.category === id) { metaFile.data.category[e.key] = "extras"; moved++; }
+    }
+    metaFile.data.categories = metaFile.data.categories.filter((x) => x.id !== id);
+    metaFile.save();
+    this.reload();
+    return moved;
+  }
+
+  setCategory(key, id) {
+    if (!this.category(id)) throw new Error("Unknown category.");
+    metaFile.data.category[key] = id;
+    metaFile.save();
+    this.reload();
+  }
+
   get(key) { const e = this.byKey.get(key); return e && !e.hidden ? e : null; }
   find(set, name) { return set ? this.get(`${set}/${name}`) : this.byName.get(name) || null; }
   names() { return new Set(this.all.map((e) => e.name)); }
   sets() { const s = {}; for (const e of this.list) s[e.set] = (s[e.set] || 0) + 1; return s; }
 
-  search(q, set) {
+  search(q, { set = "", category = "" } = {}) {
     const terms = String(q || "").toLowerCase().split(/[\s,]+/).filter(Boolean);
-    return this.list.filter((e) => (!set || e.set === set) && terms.every((t) => e.name.includes(t) || e.tags.some((x) => x.includes(t))));
+    return this.list.filter((e) => (!set || e.set === set) && (!category || e.category === category) && terms.every((t) => e.name.includes(t) || e.tags.some((x) => x.includes(t))));
   }
 
   manifest() {
@@ -105,6 +178,7 @@ class Catalog {
     if (!e || e.source === "repo") return false;
     fs.rmSync(path.join(CUSTOM_DIR, e.set, `${e.name}.svg`), { force: true });
     delete metaFile.data.tags[key];
+    delete metaFile.data.category[key];
     metaFile.data.hidden = metaFile.data.hidden.filter((k) => k !== key);
     metaFile.save();
     this.reload();
