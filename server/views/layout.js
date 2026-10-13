@@ -106,9 +106,6 @@ ${o.body}
             <nav class="footer-col" aria-label="Site pages">
                 <h3>Pages</h3>
                 <ul class="footer-links">
-                    <li><a href="/">Home</a></li>
-                    <li><a href="/icons">Icons</a></li>
-                    <li><a href="/docs">Docs</a></li>
                     <li><a href="/about">About</a></li>
                     <li><a href="/contact">Contact</a></li>
                     <li><a href="/privacy-policy">Privacy Policy</a></li>
