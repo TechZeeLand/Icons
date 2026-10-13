@@ -1,91 +1,99 @@
-# Icon service
+# TechZeeLand Icons
 
-An SVG icon set plus a tiny server that hosts it. Projects fetch icons by URL instead of copying files around.
-The server has no npm dependencies, pulls the icons from this git repository, and picks up changes automatically.
+A free, open-source SVG icon library in the spirit of Font Awesome: a public website with documentation, a CDN-style
+delivery layer (`<i class="zi zi-home">`, a web component, plain SVG URLs), self-hostable caching so other people's
+sites never wait on yours, and an admin portal for managing icons. One small Node.js service, no npm dependencies.
+
+- **311 icons** in three sets: `ui` (294 line icons, 24x24 grid), `social` (15 brand glyphs), `other` (2 project artworks).
+- **Website**: home, icon browser with copy-ready snippets, full docs, About, Contact, Privacy Policy, Terms & Conditions,
+  Cookie Policy, License, error pages. Light/dark theme, responsive, green/cyan (#3ce9be) design.
+- **Fast by design**: ETags, `stale-while-revalidate`, browser-side icon cache in `icons.js`, a mirror mode, and a sync
+  script so consumers can host the icons on their own server and still get updates on a schedule.
+- **Admin portal** at `/admin`: dashboard and anonymous stats, bulk-add icons (with automatic cleaning), edit, tag,
+  hide, replace, revert, export, sync now, site settings, account.
+- **Private**: no accounts for visitors, no cookies for visitors, no analytics scripts, no IP addresses stored.
 
 ```
-icons/
-  ui/       294 line icons, 24x24 grid, stroke="currentColor", stroke-width 2, round caps
-  social/   15 brand glyphs (filled with currentColor; google.svg keeps its brand colours)
-  other/    2 project-specific artwork files with fixed colours
-server/     the HTTP server (server.js) and the gallery page
-client/     icons.js for the browser, php/RemoteIcon.php for PHP projects
-scripts/    validate.mjs - run it before every commit
+icons/        ui/ social/ other/  - the icon files (this is what you edit and commit)
+server/       server.js, lib/ (catalog, sanitizer, sync, auth, stats, http), views/ (public + admin pages)
+public/       assets: css, js, images, favicons
+client/       icons.js (browser), php/RemoteIcon.php
+tools/        icons-sync.mjs (copy icons to your own server)
+scripts/      validate.mjs (icon checks), smoke-test.mjs
 ```
 
-## Run it on the homeserver (Portainer)
+## Deploy with Portainer (Debian 12 homeserver)
 
-1. Push this repository to GitHub, Gitea or Forgejo (public).
-2. In Portainer: **Stacks > Add stack > Repository**. Enter the repository URL and keep `docker-compose.yml` as the
-   compose path. Portainer builds the image from the `Dockerfile`.
-3. Add the environment variables below (at least `ICONS_REPO_URL` and `SOURCE_URL`) and deploy.
-4. Put your reverse proxy (Nginx Proxy Manager, Caddy, Traefik, ...) in front of port `8085` and give it a hostname with HTTPS.
+1. Create a **public** git repository from this folder (GitHub, Gitea or Forgejo) and push it.
+2. Portainer: **Stacks > Add stack > Repository**, enter the repo URL, compose path `docker-compose.yml`.
+   Portainer builds the image from the `Dockerfile`.
+3. Under *Environment variables* add at least:
 
-Open `https://<your-host>/` for the searchable gallery, or `/healthz` to see how many icons are loaded and which commit is live.
+   | Variable | Example | Meaning |
+   | --- | --- | --- |
+   | `PUBLIC_URL` | `https://icons.example.com` | Public address; used in the docs snippets and sitemap. |
+   | `ICONS_REPO_URL` | `https://github.com/you/icons.git` | Repository to follow. Empty serves the icons baked into the image. |
+   | `SOURCE_URL` | `https://github.com/you/icons` | "Source code" link (AGPL-3.0 section 13). |
+   | `SYNC_TOKEN` | long random string | Enables instant updates through a push webhook (`POST /_sync`). |
+   | `TRUST_PROXY` | `true` | Keep `true` behind a reverse proxy so HTTPS cookies and client IPs are read correctly. |
 
-| Variable | Default | Meaning |
-| --- | --- | --- |
-| `ICONS_REPO_URL` | empty | Git URL to pull. Empty serves the icons baked into the image. |
-| `ICONS_REPO_BRANCH` | `main` | Branch to follow. |
-| `ICONS_SUBDIR` | `icons` | Folder in the repo that contains `ui/`, `social/`, `other/`. |
-| `SYNC_INTERVAL_SECONDS` | `300` | Poll interval. `0` turns polling off. |
-| `SYNC_TOKEN` | empty | Enables `POST /_sync`. Also the secret for signed webhooks. |
-| `SOURCE_URL` | the repo URL | Shown in the footer and at `/source`. AGPL-3.0 section 13 asks network services to offer their source. |
-| `CACHE_MAX_AGE` | `86400` | Seconds browsers and CDNs may cache icons. |
-| `CORS_ORIGIN` | `*` | Allowed origin for cross-site fetches. |
-| `PORT` | `8085` | Host port in the compose file. |
+   All options: `ICONS_REPO_BRANCH` (main), `ICONS_SUBDIR` (icons), `SYNC_INTERVAL_SECONDS` (300, `0` = off),
+   `CACHE_MAX_AGE` (86400), `CORS_ORIGIN` (`*`), `ADMIN_ENABLED` (true), `ADMIN_USER`, `ADMIN_PASSWORD`, `PORT` (8085 on the host).
+4. Put your reverse proxy (Nginx Proxy Manager, Caddy, Traefik) in front of host port `8085` with HTTPS.
+5. **First run**: open the container log in Portainer, copy the one-time setup token, then visit `/admin/setup` to create the
+   administrator. (Or set `ADMIN_PASSWORD`, at least 10 characters, once and remove it afterwards.)
 
-If a sync fails or the repo is empty, the service keeps serving the last good set, so a bad push cannot take your projects' icons offline.
+Check `/healthz` for the icon count, the live commit and the sync mode. The `icons-data` volume holds the admin login,
+settings, icons added in the portal, the synced repository and stats. Back it up.
 
-### Instant updates (optional)
+## Two ways to manage icons
 
-Set `SYNC_TOKEN`, then add a webhook for push events pointing at `https://<your-host>/_sync` with the same value as secret.
-GitHub, Gitea and Forgejo signatures are accepted. Manual: `curl -X POST -H "Authorization: Bearer $SYNC_TOKEN" https://<your-host>/_sync`.
+- **In git (recommended source of truth).** Add `kebab-name.svg` to `icons/ui/`, run `node scripts/validate.mjs`, push.
+  The service picks it up within `SYNC_INTERVAL_SECONDS`, or immediately via the webhook.
+- **In the admin portal.** *Add icons* accepts many files at once, cleans them (removes scripts, metadata and editor junk,
+  checks the 24x24 grid, converts colours to `currentColor`) and shows a preview before saving. Icons added or edited there
+  are stored in the data volume and overlay the repository. *Sync & export* downloads them as a zip laid out for the repo
+  so you can commit them upstream.
 
-## URLs
+The portal never deletes repository icons; it can hide them, replace them (and revert), or delete icons it added itself.
 
-| URL | Result |
-| --- | --- |
-| `/i/ui/home.svg` | The icon. `/i/home.svg` searches `ui`, then `social`, then `other`. |
-| `/i/ui/home.svg?size=20&color=e11d48&stroke=1.5` | Resized, recoloured (hex without `#`, or a colour name), thinner stroke. |
-| `/api/icons?q=git&set=ui` | JSON index for search and tooling. |
-| `/sprite.svg?set=ui` | One file of `<symbol>`s with ids like `ui-home`; stroke width follows the CSS variable `--sw`. |
-| `/icons.js` | Browser client. |
+## How other people use it
 
-Responses are cached with ETags. A plain `<img src>` cannot inherit the page's text colour, so pass `color=` there or use the inline options below.
-
-## Using it in projects
-
-**Browser:**
+The `/docs` page of your deployment documents everything with your own URL filled in: CSS classes, web component, image
+tags, JavaScript API, frameworks, caching, self-hosting a cache (Docker mirror, `icons-sync.mjs` with cron or CI, Nginx or
+Caddy proxy cache), PHP helper, URL reference, accessibility, licensing.
 
 ```html
-<script src="https://icons.example.com/icons.js" defer></script>
-<svg-icon name="home" size="20"></svg-icon>
-<svg-icon name="github" set="social" size="20"></svg-icon>
+<link rel="stylesheet" href="https://icons.example.com/zi.css">
+<i class="zi zi-home"></i>
 ```
 
-The icon is inlined, so it follows `color` from your CSS. From JavaScript use `Icons.svg('home')` or `Icons.el('home')`.
-`<use href="https://other-host/sprite.svg#ui-home">` does not work cross-origin (a browser rule), so only use the sprite when the service is on the same origin as the site.
+Caching summary: browsers keep icons for `CACHE_MAX_AGE` (ETag revalidation after that), `icons.js` stores them in
+`localStorage` for 7 days and refreshes in the background, and a consumer can run `docker-compose.mirror.yml` or
+`tools/icons-sync.mjs` to serve everything from their own domain while still picking up changes on a timer.
 
-**PHP:**
+## Security notes
 
-```php
-require 'RemoteIcon.php';
-RemoteIcon::configure('https://icons.example.com', __DIR__ . '/cache/icons', __DIR__ . '/public/icons');
-echo RemoteIcon::svg('home', ['size' => 20, 'class' => 'me-1']);
+- Admin: scrypt password hashing, 12 h sliding sessions in an `HttpOnly` `SameSite=Strict` cookie scoped to `/admin`,
+  per-session CSRF tokens plus an origin check on every POST, login lockout (5 failures, 15 minutes), one-time setup token.
+- Uploaded SVGs are rebuilt from a whitelist of elements and attributes; anything else is dropped. The catalog also refuses to
+  serve any file containing scripts or event handlers, and icon responses carry a sandboxing CSP.
+- Pages use a nonce-based CSP, no inline event handlers and no third-party resources.
+- The admin is disabled entirely with `ADMIN_ENABLED=false` (use that for mirrors).
+- Put the service behind HTTPS. Sessions are in memory, so restarting the container signs everyone out.
+
+## Develop
+
+```
+node server/server.js          # DATA_DIR defaults to /data; set DATA_DIR=./data for local use
+node scripts/validate.mjs      # icon rules
+node scripts/smoke-test.mjs    # boots the server and checks the main endpoints
 ```
 
-Icons are cached on disk, so pages never wait on the service. If it is down, the cached copy and then the optional local folder are used.
-
-## Adding or changing an icon
-
-1. Put `kebab-case-name.svg` into `icons/ui/` (24x24 grid, `stroke="currentColor"`, no hard-coded colours).
-2. `node scripts/validate.mjs`
-3. Commit and push. The service updates within `SYNC_INTERVAL_SECONDS`, or immediately with the webhook.
-
-Names must be unique across sets, because `/i/<name>.svg` has no set in it.
+Requires Node 22 or newer.
 
 ## Licence
 
-GNU Affero General Public License v3.0 or later. See `LICENSE`, and `NOTICE.md` for third-party notices that must be completed before publishing.
-If you run a modified copy of the server publicly, section 13 requires you to offer your visitors the modified source; `SOURCE_URL` does that.
+GNU AGPL-3.0-or-later (see `LICENSE`). Complete `NOTICE.md` (Feather and Lucide notices, trademark note on brand logos)
+before publishing. Whether embedding the icons obliges other projects to use the AGPL is a question to settle deliberately;
+the *License note* setting in the admin portal lets you add your own statement to the public License page.

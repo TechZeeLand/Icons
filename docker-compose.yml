@@ -1,4 +1,4 @@
-# Portainer: Stacks > Add stack > "Repository" (or paste this file and set the env vars below).
+# Portainer: Stacks > Add stack > "Repository" (or paste this file and fill in the environment variables).
 services:
   icons:
     build: .
@@ -6,18 +6,23 @@ services:
     container_name: icon-service
     restart: unless-stopped
     ports:
-      - "${PORT:-8085}:3000"          # point your reverse proxy at this port
+      - "${PORT:-8085}:3000"            # point your reverse proxy at this port
     environment:
-      ICONS_REPO_URL: ${ICONS_REPO_URL:-}             # e.g. https://github.com/you/icons.git (empty = serve bundled icons)
+      PUBLIC_URL: ${PUBLIC_URL:-}                      # https://icons.example.com  (used in docs snippets and the sitemap)
+      TRUST_PROXY: ${TRUST_PROXY:-true}                # true when a reverse proxy (NPM, Caddy, Traefik) sits in front
+      ICONS_REPO_URL: ${ICONS_REPO_URL:-}              # your public icon repo, e.g. https://github.com/you/icons.git
       ICONS_REPO_BRANCH: ${ICONS_REPO_BRANCH:-main}
-      ICONS_SUBDIR: ${ICONS_SUBDIR:-icons}            # folder inside the repo that holds ui/ social/ other/
-      SYNC_INTERVAL_SECONDS: ${SYNC_INTERVAL_SECONDS:-300}   # 0 = only sync on webhook / restart
-      SYNC_TOKEN: ${SYNC_TOKEN:-}                     # enables POST /_sync and signed git webhooks
-      SOURCE_URL: ${SOURCE_URL:-}                     # shown in the footer and at /source (AGPL-3.0 section 13)
+      ICONS_SUBDIR: ${ICONS_SUBDIR:-icons}             # folder in the repo holding ui/ social/ other/
+      SYNC_INTERVAL_SECONDS: ${SYNC_INTERVAL_SECONDS:-300}
+      SYNC_TOKEN: ${SYNC_TOKEN:-}                      # enables POST /_sync and signed git webhooks
+      SOURCE_URL: ${SOURCE_URL:-}                      # shown in the footer and at /source (AGPL-3.0 section 13)
       CACHE_MAX_AGE: ${CACHE_MAX_AGE:-86400}
-      CORS_ORIGIN: ${CORS_ORIGIN:-*}                  # or your site origins, e.g. https://app.example.com
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+      ADMIN_ENABLED: ${ADMIN_ENABLED:-true}
+      ADMIN_USER: ${ADMIN_USER:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}              # optional; otherwise use the one-time token in the log at /admin/setup
     volumes:
-      - icons-data:/data
+      - icons-data:/data                               # settings, admin login, added icons, stats, synced repo
     read_only: true
     tmpfs:
       - /tmp

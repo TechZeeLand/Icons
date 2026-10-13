@@ -5,6 +5,8 @@ RUN apk add --no-cache git tini \
 WORKDIR /app
 COPY --chown=node:node server ./server
 COPY --chown=node:node client ./client
+COPY --chown=node:node tools ./tools
+COPY --chown=node:node public ./public
 COPY --chown=node:node icons ./icons
 ENV NODE_ENV=production PORT=3000 DATA_DIR=/data
 USER node

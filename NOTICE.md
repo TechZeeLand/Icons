@@ -19,6 +19,10 @@ projects can link to those services; the AGPL does not give anyone rights to the
 Google's own colours. Follow each brand's usage guidelines. Where a brand forbids redistribution of its logo,
 remove it from the repository and keep it in your private project instead.
 
+## Site logo
+
+The logo in `public/assets/img/logo.svg` and the favicons generated from it were created for this project.
+
 ## Project-specific artwork
 
 `icons/other/` holds artwork made for individual projects (store favicon, image placeholder). They are not general

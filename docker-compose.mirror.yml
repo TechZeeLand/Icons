@@ -1,0 +1,20 @@
+# Run this on YOUR OWN server to host a self-refreshing cache of someone else's icon service.
+# Your sites then load icons.js, zi.css and every icon from your domain.
+services:
+  icons-mirror:
+    image: icon-service:latest          # build it from the source repository, or use a published image
+    restart: unless-stopped
+    ports: ["8085:3000"]
+    environment:
+      ICONS_UPSTREAM: https://icons.example.com
+      SYNC_INTERVAL_SECONDS: 21600       # re-check every 6 hours
+      ADMIN_ENABLED: "false"
+      TRUST_PROXY: "true"
+      PUBLIC_URL: https://icons.yoursite.com
+    volumes: ["mirror-data:/data"]
+    read_only: true
+    tmpfs: ["/tmp"]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+volumes:
+  mirror-data:

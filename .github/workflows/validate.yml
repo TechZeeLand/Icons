@@ -1,4 +1,4 @@
-name: validate icons
+name: validate
 on: [push, pull_request]
 jobs:
   validate:
@@ -8,3 +8,4 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
       - run: node scripts/validate.mjs
+      - run: node scripts/smoke-test.mjs

@@ -1,13 +1,14 @@
 {
   "name": "icon-service",
-  "version": "1.0.0",
-  "description": "SVG icon set plus a tiny self-hosted service that serves it",
+  "version": "2.0.0",
+  "description": "Open-source SVG icon library with a website, CDN-style delivery, self-hostable caching and an admin portal",
   "license": "AGPL-3.0-or-later",
   "private": true,
   "type": "commonjs",
-  "engines": { "node": ">=18" },
+  "engines": { "node": ">=22" },
   "scripts": {
     "start": "node server/server.js",
-    "validate": "node scripts/validate.mjs"
+    "validate": "node scripts/validate.mjs",
+    "test": "node scripts/smoke-test.mjs"
   }
 }
