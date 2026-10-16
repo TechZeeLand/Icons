@@ -4,7 +4,7 @@ const fs = require("fs");
 const path = require("path");
 const env = process.env;
 
-const VERSION = "1.0.0";
+const VERSION = "1.1.0";
 const SERVICES = {
   fonts: { name: "TZL Fonts", sub: "fonts", icon: "font", desc: "Free commercial fonts you can cache on your own server", health: "/health" },
   icons: { name: "TZL Icons", sub: "icons", icon: "sparkles", desc: "Open-source SVG icon library with a CDN", health: "/healthz" },

@@ -26,6 +26,15 @@
         }
     }
 
+
+    /* ---------- header height as a CSS variable (sticky bars sit just below it) ---------- */
+    var topbar = $('.topbar');
+    function setTopbarH() { if (topbar) { root.style.setProperty('--topbar-h', topbar.offsetHeight + 'px'); } }
+    setTopbarH();
+    window.addEventListener('resize', setTopbarH);
+    window.addEventListener('load', setTopbarH);
+    if (topbar && window.ResizeObserver) { new ResizeObserver(setTopbarH).observe(topbar); }
+
     /* ---------- clipboard + copy buttons ---------- */
     function copyText(text) {
         if (navigator.clipboard && window.isSecureContext) { return navigator.clipboard.writeText(text); }
@@ -80,7 +89,7 @@
 
     /* ---------- notice banner ---------- */
     var cb = $('#cookie-banner'), ok = $('#cookie-ok');
-    if (cb) {
+    if (cb && !cb.hasAttribute('data-consent-banner')) {   // consent banners are driven by the service's own script
         var seen = false; try { seen = localStorage.getItem('tzl-notice') === '1'; } catch (e) {}
         cb.hidden = seen;
         if (ok) { ok.addEventListener('click', function () { cb.hidden = true; try { localStorage.setItem('tzl-notice', '1'); } catch (e) {} }); }

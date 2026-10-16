@@ -1,11 +1,12 @@
 {
     "name": "TechZeeLand Icons",
-    "short_name": "Icons",
+    "short_name": "TZL Icons",
     "icons": [
         { "src": "/assets/favicon/android-chrome-192x192.png", "sizes": "192x192", "type": "image/png" },
-        { "src": "/assets/favicon/android-chrome-512x512.png", "sizes": "512x512", "type": "image/png" }
+        { "src": "/assets/favicon/android-chrome-512x512.png", "sizes": "512x512", "type": "image/png" },
+        { "src": "/assets/favicon/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
     ],
-    "theme_color": "#3ce9be",
-    "background_color": "#f1faf8",
+    "theme_color": "#6cc6af",
+    "background_color": "#f0f8f6",
     "display": "standalone"
 }
