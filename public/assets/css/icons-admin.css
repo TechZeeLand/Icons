@@ -1,0 +1,59 @@
+/* SPDX-License-Identifier: AGPL-3.0-or-later */
+/* Icons admin widgets on top of the shared TZL admin styles. */
+.is-admin .check { display: flex; align-items: center; gap: 9px; margin: 12px 0 2px; cursor: pointer; }
+.is-admin .check input { width: 18px; height: 18px; accent-color: var(--accent-text); }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.grid2 > .card { margin-bottom: 0; }
+.pill { font-size: .72rem; font-weight: 700; padding: 2px 9px; border-radius: 999px; }
+.pill.ok { background: color-mix(in srgb, var(--ok) 16%, transparent); color: var(--ok); }
+.pill.err { background: color-mix(in srgb, var(--err) 16%, transparent); color: var(--err); }
+.pill.off { background: var(--accent-soft); color: var(--muted); }
+.steps { padding-left: 20px; }
+.steps li { margin: 8px 0; }
+.filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; align-items: center; }
+.filters input[type=search] { flex: 1 1 220px; width: auto; }
+.filters select { width: auto; }
+.hidden-sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+.admin-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; margin: 12px 0; }
+.tile { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 14px 6px 8px; display: flex; flex-direction: column; align-items: center; gap: 5px; text-align: center; color: var(--text); text-decoration: none; }
+.tile:hover { border-color: var(--accent-text); }
+.tile svg { width: 28px; height: 28px; }
+.tile-name { font-size: .78rem; overflow-wrap: anywhere; line-height: 1.25; }
+.tile-meta { font-size: .68rem; color: var(--muted); }
+.tile-meta b { color: var(--accent-text); }
+.tile.is-hidden { opacity: .5; border-style: dashed; }
+.pager { display: flex; align-items: center; gap: 12px; margin-top: 14px; }
+.dropzone { border: 2px dashed var(--border); border-radius: 14px; padding: 30px 16px; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; text-align: center; color: var(--muted); margin: 14px 0; }
+.dropzone .icon { width: 30px; height: 30px; color: var(--accent-text); }
+.dropzone strong { color: var(--text); }
+.dropzone:hover, .dropzone.over, .dropzone:focus-visible { border-color: var(--accent-text); background: var(--accent-soft); }
+.paste { margin-top: 8px; }
+.paste summary { cursor: pointer; font-weight: 600; }
+.items { display: grid; gap: 10px; margin-bottom: 14px; }
+.item { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; gap: 12px; align-items: start; border: 1px solid var(--border); border-radius: 10px; padding: 10px; }
+.item.bad { border-color: var(--err); }
+.item-prev { width: 64px; height: 64px; display: grid; place-items: center; background: var(--bg); border-radius: 8px; }
+.item-prev svg { width: 32px; height: 32px; color: var(--text); }
+.item-body input { max-width: 320px; padding: 6px 10px; }
+.msg { margin: 6px 0 0; font-size: .82rem; }
+.msg.err { color: var(--err); }
+.msg.warn { color: var(--warn); }
+.preview-pair { display: flex; gap: 12px; margin-bottom: 14px; }
+.preview { flex: 1; min-height: 150px; background: var(--bg); border-radius: 12px; display: grid; place-items: center; }
+.preview.small { flex: 0 0 120px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 14px; }
+.p-lg { width: 96px; height: 96px; }
+.p-sm { width: 24px; height: 24px; }
+.p-xs { width: 16px; height: 16px; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.actions form { margin: 0; }
+.item { grid-template-columns: 52px minmax(0, 1fr); }
+.item .btn { grid-column: 1 / -1; justify-self: start; }
+.inline-form { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
+.inline-form > div { min-width: 180px; flex: 1 1 200px; }
+.inline-form > div:last-child { flex: 0 0 auto; min-width: 0; }
+.inline-form label { margin-top: 0; }
+.inline-form.tight { align-items: center; flex-wrap: nowrap; }
+.inline-form.tight input[type=text] { flex: 1 1 160px; min-width: 120px; }
+.inline-form.tight select { flex: 2 1 220px; width: auto; min-width: 0; }
+.inline-form.tight .btn { flex: none; }
+.inline-form.tight { flex-wrap: wrap; }

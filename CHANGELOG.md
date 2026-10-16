@@ -38,3 +38,9 @@ Merged `svg-icons-updated (1).zip` (233 icons) and `svg-icons-updated (1) (1).zi
   terminal, cpu, hard-drive, network, cloud, cloud-download, git-commit, git-merge, git-pull-request, bug, braces, file-code, file-plus, file-down, file-up, folder-open, activity, power, battery, bluetooth, router, ram, container, plug, rss, wifi-off, shield-alert, fingerprint, scan-face, arrow-up-right, chevrons-down, chevrons-up, check-square, square, maximize, zoom-in, zoom-out, ellipsis-vertical, grip-vertical, columns, layout, table, bold, italic, underline, strikethrough, at-sign, unlink, sort-asc, sort-desc, crop, scissors, pin, pointer, repeat, target, verified, user-minus, bell-ring, calendar-days, map, compass, navigation, thermometer, pause, stop, volume, volume-x, mic, video, music, headphones, keyboard, tv, gamepad, dumbbell, timer, trophy.
 - Added `scripts/validate.mjs`, which fails on embedded metadata, oversized files, scripts, hard-coded colours in `ui/`,
   duplicate names and malformed XML.
+
+## 3.0.0
+- Rebuilt the site and admin on the TZL kit (Node edition, `server/tzl/`): shared design, header/footer/services menu, editable pages.
+- New admin: Site & domains (one root domain for all services), Header & footer, Appearance, Pages & policies, SEO, Traffic, System & backup, Security, Activity log.
+- `/health` endpoint (`/healthz` kept). Maintenance mode, CSP host allow-list, settings export/import with history.
+- Environment: `TZL_ROOT_DOMAIN`, `TZL_BASE_URL`, `TZL_TRUST_PROXY`, `TZL_ADMIN_*` (old names still work).
