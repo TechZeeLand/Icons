@@ -66,7 +66,7 @@ function addIcons(ctx, { categories, query }) {
   </div>
   <details class="paste"><summary>Or paste SVG code</summary>
     <label for="pname">Icon name</label>
-    <input type="text" id="pname" placeholder="my-icon" pattern="[a-z0-9-]+">
+    <input type="text" id="pname" placeholder="my-icon" pattern="[a-z0-9\\-]+">
     <label for="pcode">SVG code</label>
     <textarea id="pcode" rows="7" placeholder="&lt;svg xmlns=&quot;http://www.w3.org/2000/svg&quot; viewBox=&quot;0 0 24 24&quot;&gt;…&lt;/svg&gt;"></textarea>
     <p><button type="button" class="btn btn-secondary" id="padd">Add to list</button></p>

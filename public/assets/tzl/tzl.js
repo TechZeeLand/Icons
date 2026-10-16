@@ -80,7 +80,7 @@
 
     /* ---------- notice banner ---------- */
     var cb = $('#cookie-banner'), ok = $('#cookie-ok');
-    if (cb) {
+    if (cb && !cb.hasAttribute('data-consent-banner')) {   // consent banners are driven by the service's own script
         var seen = false; try { seen = localStorage.getItem('tzl-notice') === '1'; } catch (e) {}
         cb.hidden = seen;
         if (ok) { ok.addEventListener('click', function () { cb.hidden = true; try { localStorage.setItem('tzl-notice', '1'); } catch (e) {} }); }

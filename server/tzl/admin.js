@@ -59,7 +59,7 @@ function loginView(c, error, status = 200, setup = false) {
   if (setup) {
     m += `<div class="alert alert-info">${K.icon("info")}<div>First run: the one-time setup token is printed in the container log (<code>docker logs</code> or the Portainer log view).</div></div>`;
     m += `<div class="field"><label for="token">Setup token</label><input id="token" name="token" required autofocus autocomplete="off" spellcheck="false"></div>`;
-    m += `<div class="field"><label for="username">Username</label><input id="username" name="username" value="admin" required pattern="[A-Za-z0-9_.-]{3,32}" autocomplete="username"></div>`;
+    m += `<div class="field"><label for="username">Username</label><input id="username" name="username" value="admin" required pattern="[A-Za-z0-9_.\\-]{3,32}" autocomplete="username"></div>`;
     m += `<div class="field"><label for="password">Password (at least 10 characters)</label><input id="password" name="password" type="password" required minlength="10" autocomplete="new-password"></div>`;
     m += `<div class="field"><label for="password2">Repeat password</label><input id="password2" name="password2" type="password" required minlength="10" autocomplete="new-password"></div>`;
     m += `<button class="btn btn-primary btn-block" type="submit">${K.icon("check")} Create account</button>`;

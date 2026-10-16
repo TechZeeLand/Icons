@@ -40,10 +40,10 @@
 
 /* ---- Code blocks + tabs ---- */
 .ic-code { position: relative; margin: 0 0 16px; }
-.ic-code pre { margin: 0; background: var(--code-bg); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; padding-right: 76px; overflow-x: auto; font-size: .84rem; line-height: 1.55; }
+.ic-code pre { margin: 0; background: var(--code-bg); color: var(--code-text); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; padding-right: 76px; overflow-x: auto; font-size: .84rem; line-height: 1.55; }
 .ic-code pre code { background: none; padding: 0; font-size: inherit; white-space: pre; }
-.ic-code .copy { position: absolute; top: 8px; right: 8px; padding: 4px 10px; font-size: .75rem; font-weight: 700; border-radius: 8px; border: 1px solid var(--border); background: var(--panel); color: var(--text); cursor: pointer; }
-.ic-code .copy:hover { border-color: var(--accent-text); color: var(--accent-text); }
+.ic-code .copy { position: absolute; top: 8px; right: 8px; padding: 4px 10px; font-size: .75rem; border-radius: 8px; border: 1px solid rgba(255,255,255,.16); background: rgba(255,255,255,.08); color: var(--code-text); cursor: pointer; font-family: inherit; }
+.ic-code .copy:hover { background: rgba(255,255,255,.18); }
 .ic-code-label { font-size: .78rem; font-weight: 700; color: var(--muted); margin: 0 0 6px; letter-spacing: .03em; text-transform: uppercase; }
 .ic-tabs .ic-tab-list { display: flex; gap: 4px; overflow-x: auto; margin-bottom: 10px; scrollbar-width: none; }
 .ic-tabs .ic-tab-list::-webkit-scrollbar { display: none; }
@@ -115,42 +115,6 @@ dialog h2 { margin: 0 0 2px; font-size: 1.2rem; }
 .snip code { display: block; overflow-x: auto; white-space: nowrap; padding: 9px 11px; border: 1px solid var(--border); border-radius: 10px; }
 .snip button { padding: 0 14px; }
 
-/* ---- Footer ---- */
-.site-footer { background: var(--panel); border-top: 1px solid var(--border); margin-top: auto; }
-.footer-inner { max-width: 1200px; margin: 0 auto; padding: 32px 20px 20px; }
-.footer-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-.footer-col h3 { font-size: .82rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 0 0 12px; font-weight: 700; }
-.footer-links, .social-links { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
-.footer-links a { color: var(--text); text-decoration: none; font-size: .92rem; }
-.footer-links a:hover { color: var(--accent-text); text-decoration: underline; }
-.social-links a { display: inline-flex; align-items: center; gap: 10px; color: var(--text); text-decoration: none; font-size: .92rem; }
-.social-links a:hover { color: var(--accent-text); }
-.social-links .icon { width: 18px; height: 18px; color: var(--muted); }
-.social-links a:hover .icon { color: var(--accent-text); }
-.social-links .icon-box { width: 18px; display: inline-flex; justify-content: center; align-items: center; flex: 0 0 auto; }
-.pathaopay-icon { display: block; width: 15px; height: 15px; background-color: var(--muted); -webkit-mask: url('/assets/img/pathaopay-mono.svg') center / contain no-repeat; mask: url('/assets/img/pathaopay-mono.svg') center / contain no-repeat; transition: background-color .15s ease; }
-.social-links a:hover .pathaopay-icon { background-color: var(--accent-text); }
-.footer-bottom { margin-top: 26px; padding-top: 18px; border-top: 1px solid var(--border); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; font-size: .8rem; color: var(--muted); }
-.footer-bottom p { margin: 0; }
-.footer-bottom a { color: var(--muted); }
-.footer-bottom a:hover { color: var(--accent-text); }
-
-/* ---- Cookie banner ---- */
-.cookie-banner { position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 1000; max-width: 760px; margin: 0 auto; padding: 16px 18px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--panel); color: var(--text); box-shadow: 0 12px 40px rgba(0, 0, 0, .35); display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
-.cookie-banner[hidden] { display: none; }
-.cookie-banner p { margin: 0; flex: 1 1 320px; font-size: .86rem; line-height: 1.5; }
-.cookie-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-
-/* ---- Error pages ---- */
-.error-page { max-width: 560px; margin: 0 auto; padding: 60px 20px 80px; text-align: center; }
-.error-icon { width: 64px; height: 64px; margin: 0 auto 18px; border-radius: 50%; background: var(--accent-soft); color: var(--accent-text); display: flex; align-items: center; justify-content: center; }
-.error-icon .icon { width: 1.7rem; height: 1.7rem; }
-.error-code { font-size: .95rem; font-weight: 800; letter-spacing: .08em; color: var(--muted); margin: 0 0 8px; }
-.error-title { font-size: 1.5rem; margin: 0 0 10px; font-weight: 800; }
-.error-desc { color: var(--muted); font-size: .95rem; line-height: 1.6; margin: 0 0 28px; }
-.error-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-.error-links { margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--border); font-size: .85rem; color: var(--muted); }
-
 /* ---- Responsive ---- */
 @media (max-width: 900px) {
     .ic-docs { grid-template-columns: 1fr; gap: 10px; }
@@ -161,20 +125,10 @@ dialog h2 { margin: 0 0 2px; font-size: 1.2rem; }
     .ic-docs-mobile-toc a { display: block; padding: 7px 8px; text-decoration: none; }
 }
 @media (max-width: 760px) {
-    .main-nav { display: none; }
-    .nav-menu { display: block; }
-    .gh-link span { display: none; }
-    .gh-link { padding: 7px; }
     .ic-hero { padding: 36px 16px 24px; }
     .ic-toolbar { top: 62px; }
 }
 @media (max-width: 560px) {
-    .footer-cols { grid-template-columns: 1fr; gap: 22px; }
-    .footer-bottom { flex-direction: column; align-items: flex-start; }
-    .content-wrap { padding: 26px 16px 50px; }
-    .content-card { padding: 18px 16px; }
     .ic-hero-search { flex-direction: column; }
     .icon-grid { grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); }
-    .error-actions .btn { width: 100%; }
-    .topbar-inner { padding: 10px 14px; gap: 10px; }
 }

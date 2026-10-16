@@ -32,7 +32,7 @@ Kit.boot({
   description: "Free, open-source SVG icon library with a CSS class, web component and CDN. Host it yourself or use ours.",
   github: cfg.SOURCE_URL || "https://github.com/TechZeeLand",
   defaults: { contact_email: "azlanaziz@rayaz.org" },
-  nav: [["/icons", "Icons", "grid"], ["/docs", "Docs", "book-open"], ["/about", "About", "info"]],
+  nav: [["Icons", "/icons", "grid"], ["Docs", "/docs", "book-open"], ["About", "/about", "info"]],
   footer_extra: [["Icons", "/icons"], ["Docs", "/docs"], ["License", "/license"], ["Source code", "/source"]],
   sitemap: ["/icons", "/docs", "/license"],
   robots_disallow: ["/_sync"],
