@@ -10,7 +10,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const data = mkdtempSync(join(tmpdir(), "icons-"));
 const port = 20000 + Math.floor(Math.random() * 20000);
 const base = `http://127.0.0.1:${port}`;
-const child = spawn(process.execPath, [join(root, "server", "server.js")], { env: { ...process.env, PORT: String(port), DATA_DIR: data, ADMIN_PASSWORD: "", PUBLIC_URL: base }, stdio: "ignore" });
+const child = spawn(process.execPath, [join(root, "server", "server.js")], { env: { ...process.env, PORT: String(port), DATA_DIR: data, ADMIN_PASSWORD: "", PUBLIC_URL: base, TZL_ROOT_DOMAIN: "techzeeland.com" }, stdio: "ignore" });
 let failed = 0;
 const check = (name, ok) => { console.log(`${ok ? "ok  " : "FAIL"} ${name}`); if (!ok) failed++; };
 
@@ -28,7 +28,14 @@ try {
   const manifest = await (await get("/api/manifest")).json();
   check("manifest", manifest.total > 100 && manifest.icons[0].hash);
   check("zi.css", (await (await get("/zi.css?names=home")).text()).includes(".zi-home"));
+  const health = await (await get("/health")).json();
+  check("/health", health.ok === true && health.service === "icons" && health.icons > 100);
+  const home = await (await get("/")).text();
+  check("kit header/footer present", home.includes('class="topbar"') && home.includes("site-footer") && home.includes("svc-menu"));
+  check("domain follows TZL_ROOT_DOMAIN", home.includes("https://fonts.techzeeland.com/css2?family=Alata") && home.includes("https://qrcode.techzeeland.com"));
+  check("CSP has no inline scripts", !/script-src[^;]*unsafe-inline/.test((await get("/")).headers.get("content-security-policy") || ""));
+  check("robots.txt + sitemap", (await (await get("/robots.txt")).text()).includes("Sitemap:") && (await (await get("/sitemap.xml")).text()).includes("<urlset"));
   check("admin redirects when signed out", (await get("/admin")).status === 303);
   check("admin api needs login", (await get("/admin/api/icons/check", { method: "POST" })).status === 401);
-} finally { child.kill(); rmSync(data, { recursive: true, force: true }); }
+} finally { child.kill(); await new Promise((r) => { child.once("exit", r); setTimeout(r, 2000); }); rmSync(data, { recursive: true, force: true, maxRetries: 5 }); }
 process.exit(failed ? 1 : 0);

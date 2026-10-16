@@ -15,7 +15,7 @@ sites never wait on yours, and an admin portal for managing icons. One small Nod
 
 ```
 icons/        ui/ social/ other/  - the icon files (this is what you edit and commit)
-server/       server.js, lib/ (catalog, sanitizer, sync, auth, stats, http), views/ (public + admin pages)
+server/       server.js, lib/ (catalog, sanitizer, sync), tzl/ (the TZL kit for Node), views/ (public pages), admin-icons.js
 public/       assets: css, js, images, favicons
 client/       icons.js (browser), php/RemoteIcon.php
 tools/        icons-sync.mjs (copy icons to your own server)
@@ -31,19 +31,20 @@ scripts/      validate.mjs (icon checks), smoke-test.mjs
 
    | Variable | Example | Meaning |
    | --- | --- | --- |
-   | `PUBLIC_URL` | `https://icons.example.com` | Public address; used in the docs snippets and sitemap. |
+   | `TZL_ROOT_DOMAIN` | `rayaz.org` | Root domain of all TechZeeLand services. Change it (or use Admin > Site & domains) to move to `techzeeland.com`. |
+   | `TZL_BASE_URL` | `https://icons.rayaz.org` | Public address; used in the docs snippets and sitemap. (`PUBLIC_URL` still works.) |
    | `ICONS_REPO_URL` | `https://github.com/you/icons.git` | Repository to follow. Empty serves the icons baked into the image. |
    | `SOURCE_URL` | `https://github.com/you/icons` | "Source code" link (AGPL-3.0 section 13). |
    | `SYNC_TOKEN` | long random string | Enables instant updates through a push webhook (`POST /_sync`). |
-   | `TRUST_PROXY` | `true` | Keep `true` behind a reverse proxy so HTTPS cookies and client IPs are read correctly. |
+   | `TZL_TRUST_PROXY` | `1` | Keep `1` behind Cloudflare Tunnel or a reverse proxy so HTTPS cookies and client IPs are read correctly. (`TRUST_PROXY` still works.) |
 
    All options: `ICONS_REPO_BRANCH` (main), `ICONS_SUBDIR` (icons), `SYNC_INTERVAL_SECONDS` (300, `0` = off),
-   `CACHE_MAX_AGE` (86400), `CORS_ORIGIN` (`*`), `ADMIN_ENABLED` (true), `ADMIN_USER`, `ADMIN_PASSWORD`, `PORT` (8085 on the host).
+   `CACHE_MAX_AGE` (86400), `CORS_ORIGIN` (`*`), `ADMIN_ENABLED` (true), `TZL_ADMIN_USER`, `TZL_ADMIN_PASSWORD`, `PORT` (8085 on the host).
 4. Put your reverse proxy (Nginx Proxy Manager, Caddy, Traefik) in front of host port `8085` with HTTPS.
 5. **First run**: open the container log in Portainer, copy the one-time setup token, then visit `/admin/setup` to create the
    administrator. (Or set `ADMIN_PASSWORD`, at least 10 characters, once and remove it afterwards.)
 
-Check `/healthz` for the icon count, the live commit and the sync mode. The `icons-data` volume holds the admin login,
+Check `/health` (or `/healthz`) for the icon count, the live commit and the sync mode. The `icons-data` volume holds the admin login,
 settings, icons added in the portal, the synced repository and stats. Back it up.
 
 ## Two ways to manage icons
@@ -84,7 +85,7 @@ Caching summary: browsers keep icons for `CACHE_MAX_AGE` (ETag revalidation afte
   per-session CSRF tokens plus an origin check on every POST, login lockout (5 failures, 15 minutes), one-time setup token.
 - Uploaded SVGs are rebuilt from a whitelist of elements and attributes; anything else is dropped. The catalog also refuses to
   serve any file containing scripts or event handlers, and icon responses carry a sandboxing CSP.
-- Pages use a nonce-based CSP, no inline event handlers and no third-party resources.
+- Pages use a strict CSP (no inline scripts); the only external resources are the TechZeeLand Fonts service for the UI font.
 - The admin is disabled entirely with `ADMIN_ENABLED=false` (use that for mirrors).
 - Put the service behind HTTPS. Sessions are in memory, so restarting the container signs everyone out.
 
@@ -103,3 +104,14 @@ Requires Node 22 or newer.
 GNU AGPL-3.0-or-later (see `LICENSE`). Complete `NOTICE.md` (Feather and Lucide notices, trademark note on brand logos)
 before publishing. Whether embedding the icons obliges other projects to use the AGPL is a question to settle deliberately;
 the *License note* setting in the admin portal lets you add your own statement to the public License page.
+
+## TechZeeLand design and admin (v3)
+
+The site and admin portal now use the shared TZL kit (`server/tzl/`, the Node edition of `tzl-kit`): same header, footer, services
+menu and theme as Fonts, QR and Assignment Cover Generator. Everything below is editable in `/admin` without redeploying:
+Site & domains, Header & footer links, Appearance (accent, logo, announcement), Pages & policies (Markdown), SEO/ads/code,
+Traffic, System & backup (backup ZIP, settings export/import, version history), Security (CORS, CSP hosts, maintenance mode).
+Icons-specific screens: Icons, Add icons, Categories, Sync & export, Delivery & caching.
+
+Upgrading: data is kept. `settings.json` is converted once into `site.json`; the admin login (`admin.json`) keeps working.
+Old statistics are kept but the new dashboard starts counting from zero. Sessions end on every restart.

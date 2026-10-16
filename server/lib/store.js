@@ -26,30 +26,6 @@ class JsonFile {
   }
 }
 
-const SETTING_DEFAULTS = {
-  site_name: "TechZeeLand Icons",
-  tagline: "Free, open-source SVG icons. Fast, cached, and yours to host.",
-  contact_email: "azlanaziz@rayaz.org",
-  repo_url: "",
-  announcement_enabled: false,
-  announcement_text: "",
-  cookie_banner_enabled: false,
-  license_note: "",
-  cache_max_age: 0, // 0 = use the CACHE_MAX_AGE environment variable
-};
-
-const settingsFile = new JsonFile("settings.json", SETTING_DEFAULTS);
-const settings = {
-  get: (k) => (settingsFile.data[k] !== undefined ? settingsFile.data[k] : SETTING_DEFAULTS[k]),
-  all: () => ({ ...SETTING_DEFAULTS, ...settingsFile.data }),
-  set(patch) {
-    for (const k of Object.keys(SETTING_DEFAULTS)) if (k in patch) settingsFile.data[k] = patch[k];
-    settingsFile.save();
-  },
-  defaults: SETTING_DEFAULTS,
-};
-
-const adminFile = new JsonFile("admin.json", { username: "", hash: "" });
 const DEFAULT_CATEGORIES = [
   { id: "ui", label: "UI", kind: "line" },
   { id: "social", label: "Social", kind: "brand" },
@@ -59,7 +35,6 @@ const DEFAULT_CATEGORIES = [
 // categories: ordered list. category: per-icon assignment ("set/name" -> category id). Icons without one use the category
 // that matches their folder, or "extras".
 const metaFile = new JsonFile("meta.json", { tags: {}, hidden: [], categories: DEFAULT_CATEGORIES, category: {} });
-const statsFile = new JsonFile("stats.json", { days: {}, top: {} });
 
 // A secret that survives restarts (used to sign nothing sensitive today, reserved for tokens).
 function secret() {
@@ -73,4 +48,4 @@ function secret() {
   }
 }
 
-module.exports = { JsonFile, settings, adminFile, metaFile, statsFile, secret };
+module.exports = { JsonFile, metaFile, secret };

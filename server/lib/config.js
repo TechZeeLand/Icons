@@ -2,6 +2,11 @@
 "use strict";
 const path = require("path");
 const env = process.env;
+// Legacy variable names keep working: they feed the TZL_* names the kit reads.
+if (env.PUBLIC_URL && !env.TZL_BASE_URL) env.TZL_BASE_URL = env.PUBLIC_URL;
+if (env.TRUST_PROXY && !env.TZL_TRUST_PROXY) env.TZL_TRUST_PROXY = /^(1|true|yes|on)$/i.test(env.TRUST_PROXY) ? "1" : "0";
+if (env.ADMIN_PASSWORD && !env.TZL_ADMIN_PASSWORD) env.TZL_ADMIN_PASSWORD = env.ADMIN_PASSWORD;
+if (env.ADMIN_USER && !env.TZL_ADMIN_USER) env.TZL_ADMIN_USER = env.ADMIN_USER;
 
 const bool = (v, d = false) => (v === undefined || v === "" ? d : /^(1|true|yes|on)$/i.test(v));
 const int = (v, d) => (Number.isFinite(parseInt(v, 10)) ? parseInt(v, 10) : d);

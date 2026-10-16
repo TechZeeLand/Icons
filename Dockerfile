@@ -3,6 +3,7 @@ FROM node:22-alpine
 RUN apk add --no-cache git tini \
  && mkdir /data && chown node:node /data
 WORKDIR /app
+COPY --chown=node:node package.json ./
 COPY --chown=node:node server ./server
 COPY --chown=node:node client ./client
 COPY --chown=node:node tools ./tools

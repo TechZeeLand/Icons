@@ -1,1 +1,91 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64"><rect width="64" height="64" rx="16" fill="#3ce9be"/><path d="M19 21h26L19 43h26" fill="none" stroke="#04241d" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="48" cy="17" r="3.2" fill="#04241d"/></svg>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   id="Layer_1"
+   version="1.1"
+   viewBox="0 0 5000 5000"
+   sodipodi:docname="TZLLogoIcons.svg"
+   inkscape:version="1.4.3 (0d15f75, 2025-12-25)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview3"
+     pagecolor="#505050"
+     bordercolor="#ffffff"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="1"
+     inkscape:deskcolor="#505050"
+     inkscape:zoom="0.18"
+     inkscape:cx="2500"
+     inkscape:cy="2497.2222"
+     inkscape:window-width="2560"
+     inkscape:window-height="1417"
+     inkscape:window-x="1872"
+     inkscape:window-y="235"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="Layer_1" />
+  <!-- Generator: Adobe Illustrator 29.0.1, SVG Export Plug-In . SVG Version: 2.1.0 Build 192)  -->
+  <defs
+     id="defs1">
+    <style
+       id="style1">
+      .st0 {
+        fill: #6cc6af;
+      }
+    </style>
+  </defs>
+  <rect
+     width="5000"
+     height="5000"
+     id="rect1"
+     sodipodi:insensitive="true"
+     x="0"
+     y="0" />
+  <g
+     id="g5"
+     transform="translate(-2.6855469e-5,-95.244928)">
+    <g
+       id="g3">
+      <polyline
+         class="st0"
+         points="3572.32 1684.94 1190.32 1684.94 1450.32 1234.94 3832.32 1234.94"
+         id="polyline1" />
+      <rect
+         class="st0"
+         x="1167.6801"
+         y="3090.27"
+         width="1850"
+         height="450"
+         id="rect2" />
+      <rect
+         class="st0"
+         x="697.52002"
+         y="2275"
+         width="2661.73"
+         height="449.98999"
+         transform="rotate(-60,2028.383,2499.9977)"
+         id="rect3" />
+    </g>
+    <g
+       id="g4"
+       transform="translate(4538.8889,938.88889)">
+      <rect
+         style="fill:#6cc6af;fill-opacity:1;stroke-width:12.8879"
+         id="rect4"
+         width="450"
+         height="1500"
+         x="-1355.5555"
+         y="1516.6667"
+         ry="225" />
+      <circle
+         style="fill:#6cc6af;fill-opacity:1;stroke-width:9"
+         id="path4"
+         cx="-1130.5555"
+         cy="1136.1112"
+         r="225" />
+    </g>
+  </g>
+</svg>
