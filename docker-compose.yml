@@ -2,7 +2,6 @@
 services:
   icons:
     build: .
-    image: icon-service:latest
     container_name: tzl-icons
     restart: unless-stopped
     ports:
