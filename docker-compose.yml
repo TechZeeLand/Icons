@@ -5,7 +5,7 @@ services:
     container_name: tzl-icons
     restart: unless-stopped
     ports:
-      - "${PORT:-8085}:3000"            # point your reverse proxy at this port
+      - "${PORT:-1025}:3000"            # point your reverse proxy at this port
     environment:
       TZL_ROOT_DOMAIN: ${TZL_ROOT_DOMAIN:-rayaz.org}   # change to techzeeland.com when you move; fonts./qrcode./... follow automatically
       TZL_BASE_URL: ${TZL_BASE_URL:-${PUBLIC_URL:-}}   # https://icons.rayaz.org  (docs snippets, sitemap, canonical links)
