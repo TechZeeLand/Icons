@@ -117,7 +117,7 @@ module.exports = function make(catalog) {
   R["GET /admin/delivery"] = (c) => {
     const s = Site.all();
     let h = `<form method="post" action="/admin/delivery" class="admin-form">${Admin.field(c)}`;
-    h += Ui.card("Caching", "zap", Ui.text("Browser cache lifetime (seconds)", "cache_max_age", s.cache_max_age || 0, { type: "number", min: 0, max: 31536000, narrow: true, hint: `How long browsers and CDNs may reuse an icon without asking again. <code>0</code> uses the <code>CACHE_MAX_AGE</code> environment value (${cfg.CACHE_MAX_AGE} s). Longer is faster; shorter picks up changes sooner.` }));
+    h += Ui.card("Caching", "zap", Ui.text("Browser cache lifetime (seconds)", "cache_max_age", s.cache_max_age || 0, { type: "number", min: 0, max: 31536000, narrow: true, hint: `How long browsers and CDNs may reuse an icon without asking again. <code>0</code> uses the <code>CACHE_MAX_AGE</code> environment value (${cfg.CACHE_MAX_AGE} s). Icon files, <code>zi.css</code> and <code>sprite.svg</code> are capped at ${cfg.FRESH_CAP} s so new and edited icons show up quickly.` }));
     h += Ui.card("License page note", "scale", Ui.area("Extra text shown at the top of the License page", "license_note", s.license_note || "", { rows: 4, maxlength: 1000, placeholder: "For example, any additional permission you grant to people who embed the icons in their projects." }));
     h += `<div class="form-actions"><button class="btn btn-primary" type="submit">${Kit.icon("save")} Save</button></div></form>`;
     Admin.page(c, "Delivery & caching", "delivery", h);

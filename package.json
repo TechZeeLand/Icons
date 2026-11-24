@@ -1,6 +1,6 @@
 {
   "name": "icon-service",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "Open-source SVG icon library with a website, CDN-style delivery, self-hostable caching and an admin portal",
   "license": "AGPL-3.0-or-later",
   "private": true,

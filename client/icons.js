@@ -14,7 +14,13 @@
  *
  * Caching: icons are kept in localStorage for 7 days (change with data-ttl="seconds" on the script tag).
  * Inside that window an icon costs no network request. After it, the stored copy is used immediately and
- * refreshed in the background. A version check (/api/version) drops outdated copies when icons change.
+ * refreshed in the background.
+ *
+ * Freshness: at most every 5 minutes (data-check="seconds") the page asks /api/version whether any icon changed.
+ * If so, stored copies are marked stale: each one is shown instantly, re-checked in the background, and replaced
+ * on screen when it changed. An icon that was removed from the service is NOT dropped: its stored copy keeps
+ * working, so your pages survive the service being down or an icon being deleted by mistake.
+ * New icons are never stored until they exist, so they show up as soon as the service has them.
  */
 (function () {
   'use strict';
@@ -23,6 +29,8 @@
   var BASE = script && script.src ? new URL('.', script.src).href.replace(/\/$/, '') : '';
   var ttl = script && script.getAttribute('data-ttl');
   var TTL = (ttl !== null && ttl !== '' && !isNaN(+ttl) ? +ttl : 7 * 86400) * 1000;
+  var chk = script && script.getAttribute('data-check');
+  var CHECK = (chk !== null && chk !== '' && !isNaN(+chk) ? +chk : 300) * 1000;
   var PREFIX = 'zi-icons:' + BASE + '|';
   var VERSION_KEY = PREFIX + '#version';
   var mem = new Map();
@@ -60,13 +68,27 @@
     }).then(function (text) { lsSet(PREFIX + k, { t: Date.now(), v: text }); return text; });
   }
 
+  // Re-check a stored icon. Keeps the stored copy on any failure (offline, 404, 5xx); when the icon changed, updates the
+  // in-memory copy and redraws the <svg-icon> elements that use it.
+  function revalidate(k, old) {
+    return download(k, true).then(function (text) {
+      if (text !== old) {
+        mem.set(k, Promise.resolve(text));
+        Array.prototype.forEach.call(document.querySelectorAll('svg-icon'), function (n) {
+          var nm = n.getAttribute('name'), st = n.getAttribute('set');
+          if (nm && key(nm, st) === k && n.isConnected) n._render();
+        });
+      }
+    }).catch(function () { /* keep the stored copy */ });
+  }
+
   function raw(name, set) {
     var k = key(name, set);
     if (mem.has(k)) return mem.get(k);
     var hit = lsGet(PREFIX + k), p;
     if (hit && typeof hit.v === 'string') {
       p = Promise.resolve(hit.v);
-      if (Date.now() - hit.t >= TTL) download(k, true).catch(function () { /* offline: keep the stored copy */ });
+      if (Date.now() - hit.t >= TTL) revalidate(k, hit.v);
     } else {
       p = download(k, false);
       p.catch(function () { mem.delete(k); });
@@ -75,19 +97,33 @@
     return p;
   }
 
+  // Mark every stored icon stale (t = 0) without deleting it, then re-check the ones this page is showing.
+  function markStale(alsoShown) {
+    try {
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (!k || k.indexOf(PREFIX) !== 0 || k === VERSION_KEY) continue;
+        var e = lsGet(k);
+        if (e && typeof e.v === 'string') { e.t = 0; try { localStorage.setItem(k, JSON.stringify(e)); } catch (x) { /* ignore */ } }
+      }
+    } catch (e) { /* ignore */ }
+    if (alsoShown) mem.forEach(function (p, k) { p.then(function (text) { revalidate(k, text); }, function () {}); });
+  }
+
   function refresh() {
     return fetch(BASE + '/api/version', { cache: 'no-cache' }).then(function (r) { return r.json(); }).then(function (j) {
       var prev = lsGet(VERSION_KEY);
       lsSet(VERSION_KEY, { t: Date.now(), v: j.version });
-      if (prev && prev.v !== j.version) { clearCache(); return true; }
+      if (prev && prev.v !== j.version) { markStale(true); return true; }
+      if (!prev) markStale(false); // first check on this browser: copies stored earlier are of unknown age
       return false;
     }).catch(function () { return false; });
   }
 
-  // Check for updates at most once per TTL window, without blocking rendering.
+  // Ask about changes now and then (every CHECK seconds at most), without blocking rendering.
   (function () {
     var v = lsGet(VERSION_KEY);
-    if (!v || Date.now() - v.t >= TTL) (window.requestIdleCallback || setTimeout)(function () { refresh(); }, 1500);
+    if (!v || Date.now() - v.t >= CHECK) (window.requestIdleCallback || setTimeout)(function () { refresh(); }, 1500);
   })();
 
   function parse(text) {

@@ -162,7 +162,7 @@
         rows.forEach(function (r) {
             var wrap = document.createElement('div');
             wrap.innerHTML = '<p class="code-label"></p><div class="snip"><code></code><button type="button" class="btn btn-secondary">Copy</button></div>';
-            wrap.querySelector('.ic-code-label').textContent = r[0]; wrap.querySelector('code').textContent = r[1];
+            wrap.querySelector('.code-label').textContent = r[0]; wrap.querySelector('code').textContent = r[1];
             var btn = wrap.querySelector('button'); btn.addEventListener('click', function () { copyText(r[1], btn); });
             box.appendChild(wrap);
         });

@@ -16,7 +16,7 @@ services:
       SYNC_INTERVAL_SECONDS: ${SYNC_INTERVAL_SECONDS:-300}
       SYNC_TOKEN: ${SYNC_TOKEN:-}                      # enables POST /_sync and signed git webhooks
       SOURCE_URL: ${SOURCE_URL:-}                      # shown in the footer and at /source (AGPL-3.0 section 13)
-      CACHE_MAX_AGE: ${CACHE_MAX_AGE:-86400}
+      CACHE_MAX_AGE: ${CACHE_MAX_AGE:-60}
       CORS_ORIGIN: ${CORS_ORIGIN:-*}
       ADMIN_ENABLED: ${ADMIN_ENABLED:-true}
       ADMIN_USER: ${ADMIN_USER:-admin}

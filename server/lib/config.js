@@ -31,7 +31,8 @@ module.exports = {
   PUBLIC_URL: (env.PUBLIC_URL || "").replace(/\/+$/, ""),
   TRUST_PROXY: bool(env.TRUST_PROXY, false),
   COOKIE_SECURE: env.COOKIE_SECURE === undefined ? "auto" : bool(env.COOKIE_SECURE),
-  CACHE_MAX_AGE: int(env.CACHE_MAX_AGE, 86400),
+  CACHE_MAX_AGE: int(env.CACHE_MAX_AGE, 60),
+  FRESH_CAP: 300, // icon files, zi.css and sprite.svg never get a longer lifetime than this, so edits show up quickly
   CORS_ORIGIN: env.CORS_ORIGIN || "*",
   ADMIN_ENABLED: bool(env.ADMIN_ENABLED, true),
   ADMIN_USER: env.ADMIN_USER || "admin",

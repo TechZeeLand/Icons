@@ -1,5 +1,17 @@
 # Changelog
 
+## 3.0.1
+
+- Fix: clicking an icon on /icons threw `wrap.querySelector(...) is null` (wrong class name), so no snippets could be copied.
+- Fix: new and edited icons stayed invisible for up to a day. Icons, `zi.css` and `sprite.svg` are now cached for at most
+  60 s (cap 300 s) with no stale-while-revalidate, plus `stale-if-error`. Missing icons (404) are cached for 15 s, not 60.
+- `icons.js`: checks `/api/version` every 5 minutes (`data-check`), re-checks changed icons and redraws them, and no longer
+  deletes stored copies on a version change, so icons removed from the service keep working in your projects.
+- `RemoteIcon.php`: compares `/api/manifest` every 5 minutes and re-downloads icons whose content changed; removed icons stay
+  served from your cache; a dead service is retried at most once a minute per icon, not on every request.
+- Catalog: tolerates a BOM, XML header, comment or DOCTYPE before `<svg>`, and reports every icon file it refuses to serve
+  (bad file name, too big, active content, not an SVG) in the log and under `skipped_files` in `/healthz`.
+
 ## 2.2.0
 
 - Docs: "Download as Markdown" button. `/docs.md` returns the whole documentation as one shareable Markdown file with this

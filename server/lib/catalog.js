@@ -11,7 +11,10 @@ const MAX_SVG_BYTES = 64 * 1024;
 const sha = (s) => crypto.createHash("sha1").update(s).digest("hex");
 const rank = (set) => { const i = SET_ORDER.indexOf(set); return i === -1 ? SET_ORDER.length : i; };
 
-function scan(dir, source) {
+/** Editors (Illustrator, Inkscape, Figma) often put a BOM, an XML header, a comment or a DOCTYPE before <svg>. Drop those. */
+const PROLOG = /^(?:\uFEFF|\s+|<\?xml[^>]*\?>|<!--[\s\S]*?-->|<!DOCTYPE[^>]*>)+/i;
+
+function scan(dir, source, skipped = []) {
   const out = [];
   let sets = [];
   try {
@@ -19,18 +22,21 @@ function scan(dir, source) {
   } catch { return out; }
   for (const set of sets) {
     for (const f of fs.readdirSync(path.join(dir, set)).sort()) {
-      if (!f.endsWith(".svg")) continue;
+      if (!f.toLowerCase().endsWith(".svg")) continue;
+      const skip = (why) => skipped.push({ file: `${set}/${f}`, source, why });
       const name = f.slice(0, -4);
-      if (!NAME_RE.test(name)) continue;
+      if (!NAME_RE.test(name)) { skip("file name must be lowercase letters, digits and hyphens, e.g. my-icon.svg"); continue; }
+      if (!f.endsWith(".svg")) { skip("extension must be lowercase .svg"); continue; }
       const full = path.join(dir, set, f);
       try {
         const st = fs.statSync(full);
-        if (!st.isFile() || st.size > MAX_SVG_BYTES) continue;
-        const svg = fs.readFileSync(full, "utf8");
-        if (!/^\s*(<\?xml[^>]*>\s*)?<svg\b/.test(svg)) continue;
-        if (/<script|<foreignObject|\son[a-z]+\s*=|javascript:/i.test(svg)) continue; // never serve active content
+        if (!st.isFile()) continue;
+        if (st.size > MAX_SVG_BYTES) { skip(`larger than ${MAX_SVG_BYTES / 1024} KB`); continue; }
+        const svg = fs.readFileSync(full, "utf8").replace(PROLOG, "");
+        if (!/^<svg\b/i.test(svg)) { skip("does not start with an <svg> element"); continue; }
+        if (/<script|<foreignObject|\son[a-z]+\s*=|javascript:/i.test(svg)) { skip("contains script, foreignObject, an on* handler or javascript:"); continue; } // never serve active content
         out.push({ set, name, key: `${set}/${name}`, svg, source });
-      } catch { /* unreadable file: skip */ }
+      } catch (e) { skip(`unreadable (${e.code || e.message})`); }
     }
   }
   return out;
@@ -44,6 +50,8 @@ class Catalog {
     this.byKey = new Map();
     this.byName = new Map();
     this.version = "empty";
+    this.skipped = [];   // icon files that were found but not served, with the reason
+    this._skipSig = "";
     this.reload();
   }
 
@@ -51,8 +59,9 @@ class Catalog {
 
   reload() {
     const merged = new Map();
-    for (const e of scan(this.baseDir, "repo")) merged.set(e.key, e);
-    for (const e of scan(CUSTOM_DIR, "custom")) {
+    const skipped = [];
+    for (const e of scan(this.baseDir, "repo", skipped)) merged.set(e.key, e);
+    for (const e of scan(CUSTOM_DIR, "custom", skipped)) {
       const prev = merged.get(e.key);
       merged.set(e.key, { ...e, source: prev ? "override" : "custom" });
     }
@@ -70,6 +79,12 @@ class Catalog {
     all.sort((a, b) => order.get(a.category) - order.get(b.category) || rank(a.set) - rank(b.set) || a.set.localeCompare(b.set) || a.name.localeCompare(b.name));
     const list = all.filter((e) => !e.hidden);
     if (!list.length && this.list.length) return false; // never wipe a working catalog
+    this.skipped = skipped;
+    const sig = skipped.map((s) => s.file + s.why).join("|");
+    if (sig !== this._skipSig) {
+      this._skipSig = sig;
+      for (const s of skipped) console.log(`${new Date().toISOString()} icon skipped: ${s.file} (${s.why})`);
+    }
     this.all = all;
     this.list = list;
     this.byKey = new Map(all.map((e) => [e.key, e]));

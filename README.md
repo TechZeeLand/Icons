@@ -39,7 +39,7 @@ scripts/      validate.mjs (icon checks), smoke-test.mjs
    | `TZL_TRUST_PROXY` | `1` | Keep `1` behind Cloudflare Tunnel or a reverse proxy so HTTPS cookies and client IPs are read correctly. (`TRUST_PROXY` still works.) |
 
    All options: `ICONS_REPO_BRANCH` (main), `ICONS_SUBDIR` (icons), `SYNC_INTERVAL_SECONDS` (300, `0` = off),
-   `CACHE_MAX_AGE` (86400), `CORS_ORIGIN` (`*`), `ADMIN_ENABLED` (true), `TZL_ADMIN_USER`, `TZL_ADMIN_PASSWORD`, `PORT` (8085 on the host).
+   `CACHE_MAX_AGE` (60), `CORS_ORIGIN` (`*`), `ADMIN_ENABLED` (true), `TZL_ADMIN_USER`, `TZL_ADMIN_PASSWORD`, `PORT` (8085 on the host).
 4. Put your reverse proxy (Nginx Proxy Manager, Caddy, Traefik) in front of host port `8085` with HTTPS.
 5. **First run**: open the container log in Portainer, copy the one-time setup token, then visit `/admin/setup` to create the
    administrator. (Or set `ADMIN_PASSWORD`, at least 10 characters, once and remove it afterwards.)
@@ -75,8 +75,9 @@ button (`/docs.md`) that exports everything, with your URL and all icon names, a
 <i class="zi zi-home"></i>
 ```
 
-Caching summary: browsers keep icons for `CACHE_MAX_AGE` (ETag revalidation after that), `icons.js` stores them in
-`localStorage` for 7 days and refreshes in the background, and a consumer can run `docker-compose.mirror.yml` or
+Caching summary: icons, `zi.css` and `sprite.svg` are cached for at most a minute (`CACHE_MAX_AGE`, default 60, capped at 300) with
+ETag revalidation, so added or edited icons appear quickly; `icons.js` stores icons in
+`localStorage` for 7 days, checks `/api/version` every 5 minutes and refreshes changed icons (icons removed from the service keep working), and a consumer can run `docker-compose.mirror.yml` or
 `tools/icons-sync.mjs` to serve everything from their own domain while still picking up changes on a timer.
 
 ## Security notes

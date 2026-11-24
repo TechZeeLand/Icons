@@ -38,7 +38,7 @@ Kit.boot({
   robots_disallow: ["/_sync"],
   css: ["assets/css/icons.css"], admin_css: ["assets/css/icons-admin.css"], admin_js: ["assets/js/icons-admin.js"],
   admin_menu: icons.menu, admin_routes: icons.routes, dashboard: icons.dashboard,
-  health_extra: () => ({ icons: catalog.list.length, version: catalog.version, commit: sync.state.rev || null, sync: sync.state.mode }),
+  health_extra: () => ({ icons: catalog.list.length, version: catalog.version, commit: sync.state.rev || null, sync: sync.state.mode, skipped: catalog.skipped.length, skipped_files: catalog.skipped.slice(0, 25) }),
   page_extra: {
     "privacy-policy": "- **Icon caching on other sites.** If a website uses `icons.js`, icon files are cached in that visitor's browser (localStorage) for a few days. It stores icon markup and timestamps only, never personal data.",
   },
@@ -53,6 +53,9 @@ function makeCtx(req, pathname) {
   return { req, path: pathname, catalog, settings: legacySettings(), base: Kit.baseUrl(req), assetV: ASSET_V, cacheMaxAge: cfg.CACHE_MAX_AGE, session: null };
 }
 const maxAge = () => Number(Site.get("cache_max_age")) || cfg.CACHE_MAX_AGE;
+/** Icons, zi.css and the sprite change when you add or edit an icon, so they get a short lifetime, no stale-while-revalidate
+ *  (that would show the old copy once more), and stale-if-error so a CDN keeps serving them if this service is down. */
+const FRESH = () => ({ maxAge: Math.min(maxAge(), cfg.FRESH_CAP), swr: 0, sie: 30 * 86400 });
 const sendPage = (req, res, ctx, status, page) => H.html(req, res, status, layout(ctx, page));
 const notFound = (req, res, ctx) => (/text\/html/.test(req.headers.accept || "") ? Core.errorPage(req, res, ctx, 404) : H.text(req, res, 404, "Not found"));
 
@@ -88,16 +91,16 @@ async function publicRoutes(req, res, ctx, url) {
   const m = ICON_ROUTE.exec(p);
   if (m) {
     const entry = catalog.find(m[1], m[2]);
-    if (!entry) return H.text(req, res, 404, "Icon not found", { "Cache-Control": "public, max-age=60" });
+    if (!entry) return H.text(req, res, 404, "Icon not found", { "Cache-Control": "public, max-age=15" });
     const svg = render(entry, url.searchParams);
     if (svg === null) return H.text(req, res, 400, "Invalid size, stroke or color parameter");
     Stats.event("icon", entry.key);
-    return H.sendCached(req, res, svg, "image/svg+xml; charset=utf-8", `${entry.key}|${url.search}`, { maxAge: maxAge(), extra: SVG_CSP });
+    return H.sendCached(req, res, svg, "image/svg+xml; charset=utf-8", `${entry.key}|${url.search}`, { ...FRESH(), extra: SVG_CSP });
   }
 
   switch (p) {
     case "/healthz":
-      return H.json(req, res, 200, Monitor.health({ icons: catalog.list.length, version: catalog.version, commit: sync.state.rev || null, sync: sync.state.mode }), { "Cache-Control": "no-store" });
+      return H.json(req, res, 200, Monitor.health({ icons: catalog.list.length, version: catalog.version, commit: sync.state.rev || null, sync: sync.state.mode, skipped: catalog.skipped.length, skipped_files: catalog.skipped.slice(0, 25) }), { "Cache-Control": "no-store" });
     case "/api/version":
       return H.json(req, res, 200, { version: catalog.version, total: catalog.list.length }, { "Cache-Control": "public, max-age=60" });
     case "/api/manifest":
@@ -110,15 +113,15 @@ async function publicRoutes(req, res, ctx, url) {
     case "/sprite.svg": {
       const list = pickEntries(url.searchParams, false);
       if (!list) return H.text(req, res, 400, "Bad set");
-      return H.sendCached(req, res, spriteSvg(list), "image/svg+xml; charset=utf-8", `sprite|${catalog.version}|${url.search}`, { maxAge: maxAge(), extra: SVG_CSP });
+      return H.sendCached(req, res, spriteSvg(list), "image/svg+xml; charset=utf-8", `sprite|${catalog.version}|${url.search}`, { ...FRESH(), extra: SVG_CSP });
     }
     case "/zi.css": {
       const list = pickEntries(url.searchParams, true);
       if (!list) return H.text(req, res, 400, "Bad set");
-      return H.sendCached(req, res, maskCss(list), "text/css; charset=utf-8", `zi|${catalog.version}|${url.search}`, { maxAge: maxAge() });
+      return H.sendCached(req, res, maskCss(list), "text/css; charset=utf-8", `zi|${catalog.version}|${url.search}`, { ...FRESH() });
     }
     case "/icons.js":
-      return H.sendCached(req, res, read(cfg.CLIENT_DIR, "icons.js"), "text/javascript; charset=utf-8", "client", { maxAge: Math.min(maxAge(), 3600) });
+      return H.sendCached(req, res, read(cfg.CLIENT_DIR, "icons.js"), "text/javascript; charset=utf-8", "client", { ...FRESH() });
     case "/docs.md": {
       const md = docsMarkdown(ctx);
       const slug = Kit.slugify(String(ctx.settings.site_name)) || "icons";

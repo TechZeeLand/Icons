@@ -119,8 +119,8 @@ URL options: \`size\` (1 to 2048), \`stroke\` (0.25 to 4) and \`color\` (hex wit
 
 Icons rarely change, so repeating a download on every page view is wasted time. Three layers:
 
-1. **In the browser.** \`icons.js\` keeps icons in \`localStorage\` for 7 days. Within that window an icon costs no network request. After it, the stored copy is shown instantly and refreshed quietly in the background. Change the window with \`<script src="${B}/icons.js" data-ttl="86400">\` (seconds).
-2. **On the wire.** Every response carries \`Cache-Control\` with \`stale-while-revalidate\` and an \`ETag\`, so a refresh is a tiny "not modified" reply.
+1. **In the browser.** \`icons.js\` keeps icons in \`localStorage\` for 7 days. Within that window an icon costs no network request. After it, the stored copy is shown instantly and refreshed quietly in the background. Every 5 minutes at most it also asks `/api/version` whether anything changed, and changed icons are replaced on screen. An icon removed from the service keeps working from the stored copy. Change the window with \`<script src="${B}/icons.js" data-ttl="86400">\` (seconds).
+2. **On the wire.** Icons, \`zi.css\` and the sprite are cached for a minute at most and carry an \`ETag\`, so new and edited icons show up within about a minute and a refresh is a tiny "not modified" reply.
 3. **On your server (optional, fastest).** Mirror the icons onto your own domain (next section).
 
 \`${B}/api/version\` publishes a version fingerprint that changes whenever any icon changes. \`Icons.refresh()\` and the sync tools compare against it and download only what changed.
