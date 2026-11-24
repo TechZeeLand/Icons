@@ -5,6 +5,7 @@ const path = require("path");
 const crypto = require("crypto");
 const { DATA_DIR, SEED_DIR, SET_ORDER, NAME_RE } = require("./config");
 const { metaFile } = require("./store");
+const { sanitize } = require("./sanitize");
 
 const CUSTOM_DIR = path.join(DATA_DIR, "custom");
 const MAX_SVG_BYTES = 64 * 1024;
@@ -13,6 +14,16 @@ const rank = (set) => { const i = SET_ORDER.indexOf(set); return i === -1 ? SET_
 
 /** Editors (Illustrator, Inkscape, Figma) often put a BOM, an XML header, a comment or a DOCTYPE before <svg>. Drop those. */
 const PROLOG = /^(?:\uFEFF|\s+|<\?xml[^>]*\?>|<!--[\s\S]*?-->|<!DOCTYPE[^>]*>)+/i;
+
+/** Files committed straight to git skip the admin portal's cleaner. Metadata (Content Credentials/C2PA, editor data) bloats the sprite
+ *  and breaks it as XML; hard-coded colours (stroke="#000") make a ui icon invisible on dark backgrounds. Clean only those files. */
+const NEEDS_TIDY = /<metadata|<title\b|<desc\b|c2pa|sodipodi|inkscape|<\/?[a-z][\w.-]*:[\w.-]+/i;
+const HARD_COLOUR = /\s(?:fill|stroke)\s*=\s*["'](?!none["']|currentColor["']|url\()/i;
+function tidy(svg, set) {
+  if (!(NEEDS_TIDY.test(svg) || (set === "ui" && HARD_COLOUR.test(svg)))) return svg;
+  const out = sanitize(svg, { set, normalize: set === "ui" });
+  return out.errors.length ? svg : out.svg.trim(); // if it cannot be cleaned, serve it as it is
+}
 
 function scan(dir, source, skipped = []) {
   const out = [];
@@ -35,7 +46,7 @@ function scan(dir, source, skipped = []) {
         const svg = fs.readFileSync(full, "utf8").replace(PROLOG, "");
         if (!/^<svg\b/i.test(svg)) { skip("does not start with an <svg> element"); continue; }
         if (/<script|<foreignObject|\son[a-z]+\s*=|javascript:/i.test(svg)) { skip("contains script, foreignObject, an on* handler or javascript:"); continue; } // never serve active content
-        out.push({ set, name, key: `${set}/${name}`, svg, source });
+        out.push({ set, name, key: `${set}/${name}`, svg: source === "repo" ? tidy(svg, set) : svg, source });
       } catch (e) { skip(`unreadable (${e.code || e.message})`); }
     }
   }

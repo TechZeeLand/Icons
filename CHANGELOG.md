@@ -9,6 +9,9 @@
   deletes stored copies on a version change, so icons removed from the service keep working in your projects.
 - `RemoteIcon.php`: compares `/api/manifest` every 5 minutes and re-downloads icons whose content changed; removed icons stay
   served from your cache; a dead service is retried at most once a minute per icon, not on every request.
+- Catalog: icons committed to git now get the portal's cleaning when they need it (embedded metadata such as C2PA/Content Credentials,
+  editor data, or hard-coded `stroke="#000"` on ui icons, which made them invisible on dark backgrounds). `ui/newspaper.svg` and
+  `ui/quote.svg` were such files; they are cleaned in the repo too.
 - Catalog: tolerates a BOM, XML header, comment or DOCTYPE before `<svg>`, and reports every icon file it refuses to serve
   (bad file name, too big, active content, not an SVG) in the log and under `skipped_files` in `/healthz`.
 
