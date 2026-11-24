@@ -46,7 +46,10 @@
         }
         input.addEventListener('input', apply);
         // One request for the sprite; the previews then reference it inside this page.
-        fetch('sprite.svg').then(function (r) { return r.text(); }).then(function (t) {
+        // Ask for the sprite by version so a browser or CDN copy from before an icon was added is never reused.
+        fetch('/api/version', { cache: 'no-cache' }).then(function (r) { return r.json(); }).catch(function () { return {}; }).then(function (j) {
+            return fetch('/sprite.svg' + (j && j.version ? '?v=' + encodeURIComponent(j.version) : ''), { cache: 'no-cache' });
+        }).then(function (r) { return r.text(); }).then(function (t) {
             var h = document.createElement('div'); h.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden'; h.setAttribute('aria-hidden', 'true'); h.innerHTML = t; document.body.prepend(h);
         }).catch(function () { /* previews are optional */ });
     })();
@@ -92,10 +95,10 @@
     var root = document.documentElement, color = null, icons = [], total = 0, commit = null, catLabel = {};
     var base = cfg.base || location.origin;
 
-    Promise.all([
-        fetch('/sprite.svg').then(function (r) { return r.text(); }),
-        fetch('/api/icons').then(function (r) { return r.json(); })
-    ]).then(function (res) {
+    // List first, then the sprite for exactly that version: the names and the drawings can never come from different moments.
+    fetch('/api/icons', { cache: 'no-cache' }).then(function (r) { return r.json(); }).then(function (list) {
+        return fetch('/sprite.svg?v=' + encodeURIComponent(list.version || ''), { cache: 'no-cache' }).then(function (r) { return r.text(); }).then(function (svg) { return [svg, list]; });
+    }).then(function (res) {
         var holder = document.createElement('div');
         holder.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden';
         holder.innerHTML = res[0];

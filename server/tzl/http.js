@@ -64,9 +64,11 @@ function html(req, res, status, page, { admin = false, extra = {} } = {}) {
     ...(admin ? { "X-Robots-Tag": "noindex, nofollow", "Access-Control-Allow-Origin": null, "Cross-Origin-Resource-Policy": "same-origin" } : {}), ...extra,
   });
 }
-function sendCached(req, res, body, type, etagSeed, { maxAge = 86400, extra = {} } = {}) {
+function sendCached(req, res, body, type, etagSeed, { maxAge = 86400, swr, sie, extra = {} } = {}) {
   const etag = '"' + crypto.createHash("sha1").update(String(etagSeed)).update(body).digest("hex").slice(0, 20) + '"';
-  const cache = `public, max-age=${maxAge}, stale-while-revalidate=${maxAge * 7}`;
+  // swr / sie are honoured when given (0 turns stale-while-revalidate off); callers that pass neither keep the old default.
+  const swrSec = swr === undefined ? maxAge * 7 : swr;
+  const cache = `public, max-age=${maxAge}` + (swrSec > 0 ? `, stale-while-revalidate=${swrSec}` : "") + (sie > 0 ? `, stale-if-error=${sie}` : "");
   if (req.headers["if-none-match"] === etag) { res.writeHead(304, baseHeaders({ ETag: etag, "Cache-Control": cache })); return res.end(); }
   send(req, res, 200, body, { "Content-Type": type, ETag: etag, "Cache-Control": cache, ...extra });
 }
